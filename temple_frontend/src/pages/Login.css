@@ -1,0 +1,159 @@
+/* Full Page Background */
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #c62828, #8e0000);
+}
+
+/* Card */
+.login-card {
+  background: #ffffff;
+  padding: 45px 40px;
+  width: 380px;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+/* Title */
+.login-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #c62828;
+  margin-bottom: 6px;
+}
+
+/* Subtitle */
+.login-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 25px;
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+/* Inputs */
+.form-group input {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  transition: 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #c62828;
+  box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.15);
+}
+
+/* Button */
+button {
+  width: 100%;
+  padding: 11px;
+  background-color: #c62828;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+button:hover {
+  background-color: #a31515;
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  background-color: #d88c8c;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+.error-message {
+  background-color: #ffe5e5;
+  color: #c62828;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+/* ===== Password Wrapper ===== */
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  color: #888;
+  font-size: 16px;
+  transition: 0.2s ease;
+}
+
+.eye-icon:hover {
+  color: #d32f2f;
+}
+/* ===== Auth Switch (Register / Login Link) ===== */
+
+.auth-switch {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 14px;
+  color: #555;
+}
+
+.auth-switch a {
+  color: #c62828;
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 4px;
+  transition: 0.2s ease;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+  color: #8e0000;
+}
+
+
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

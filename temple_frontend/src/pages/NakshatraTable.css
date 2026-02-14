@@ -1,0 +1,273 @@
+/* ============================= */
+/* ===== Page Container ======== */
+/* ============================= */
+
+.table-container {
+  min-height: 100vh;
+  background: #f4f6f9;
+  padding: 60px 80px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+
+/* ============================= */
+/* ===== Header Section ======== */
+/* ============================= */
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.table-header h2 {
+  color: #d32f2f;
+  font-weight: 600;
+  font-size: 22px;
+}
+
+/* Header Button Wrapper */
+.header-actions {
+  display: flex;
+  gap: 15px; /* Same spacing everywhere */
+}
+
+/* Header Buttons */
+.header-btn,
+.download-btn {
+  padding: 9px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+/* Back Button */
+.header-btn {
+  background: #1976d2;
+  color: white;
+}
+
+.header-btn:hover {
+  background: #125ea8;
+  transform: translateY(-2px);
+}
+
+/* Download Button */
+.download-btn {
+  background: #2e7d32;
+  color: white;
+}
+
+.download-btn:hover {
+  background: #1b5e20;
+  transform: translateY(-2px);
+}
+
+
+/* ============================= */
+/* ===== Total Count =========== */
+/* ============================= */
+
+.total-count {
+  margin-bottom: 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #444;
+}
+
+
+/* ============================= */
+/* ===== Table Card ============ */
+/* ============================= */
+
+.table-wrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+}
+
+
+/* ============================= */
+/* ===== Table Styling ========= */
+/* ============================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #d32f2f;
+  color: white;
+}
+
+th,
+td {
+  padding: 14px 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+tbody tr {
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s ease;
+}
+
+tbody tr:hover {
+  background: #fafafa;
+}
+
+/* No Data */
+.no-data {
+  text-align: center;
+  padding: 25px;
+  color: #777;
+  font-style: italic;
+}
+
+
+/* ============================= */
+/* ===== Edit Inputs =========== */
+/* ============================= */
+
+td input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  transition: 0.3s ease;
+}
+
+td input:focus {
+  outline: none;
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.15);
+}
+
+
+/* ============================= */
+/* ===== Action Buttons ======== */
+/* ============================= */
+
+/* Wrapper — EXACT same pattern as header */
+.action-buttons {
+  display: flex;
+  gap: 15px;  /* Same gap as header */
+  align-items: center;
+}
+
+/* Base Button Style */
+.edit-btn,
+.delete-btn,
+.save-btn,
+.cancel-btn {
+  padding: 9px 18px;   /* Same size as header buttons */
+  border-radius: 6px;  /* Same radius */
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+/* Edit */
+.edit-btn {
+  background: #1976d2;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #125ea8;
+  transform: translateY(-2px);
+}
+
+/* Delete */
+.delete-btn {
+  background: #d32f2f;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #b71c1c;
+  transform: translateY(-2px);
+}
+
+/* Save */
+.save-btn {
+  background: #2e7d32;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #1b5e20;
+  transform: translateY(-2px);
+}
+
+/* Cancel */
+.cancel-btn {
+  background: #9e9e9e;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #757575;
+  transform: translateY(-2px);
+}
+
+
+/* ============================= */
+/* ===== Responsive Design ===== */
+/* ============================= */
+
+@media (max-width: 992px) {
+  .table-container {
+    padding: 40px 30px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .table-container {
+    padding: 30px 15px;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .edit-btn,
+  .delete-btn,
+  .save-btn,
+  .cancel-btn {
+    width: 100%;
+  }
+
+  .header-btn,
+  .download-btn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,72 @@
+/* ===== Page Container ===== */
+
+.nakshatra-container {
+  min-height: 100vh;
+  background: #f4f6f9;
+  padding: 60px 80px;
+}
+
+/* ===== Header ===== */
+
+.nakshatra-header {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.nakshatra-header h2 {
+  font-size: 26px;
+  font-weight: 600;
+  color: #d32f2f;
+  position: relative;
+  display: inline-block;
+}
+
+/* underline accent */
+.nakshatra-header h2::after {
+  content: "";
+  width: 60%;
+  height: 3px;
+  background: #d32f2f;
+  position: absolute;
+  bottom: -8px;
+  left: 20%;
+  border-radius: 2px;
+}
+
+/* ===== Grid Layout ===== */
+
+.nakshatra-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+/* ===== Card Design ===== */
+
+.nakshatra-card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.nakshatra-card:hover {
+  transform: translateY(-5px);
+  border-color: #d32f2f;
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+  color: #d32f2f;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 768px) {
+  .nakshatra-container {
+    padding: 40px 20px;
+  }
+}

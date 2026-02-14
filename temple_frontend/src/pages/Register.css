@@ -1,0 +1,103 @@
+.register-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #c62828, #8e0000);
+}
+
+.register-card {
+  background: white;
+  padding: 40px;
+  width: 420px;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.register-title {
+  text-align: center;
+  color: #c62828;
+  font-weight: 700;
+}
+
+.register-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group input {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 35px;
+}
+
+.password-wrapper span {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  color: #888;
+}
+
+button {
+  width: 100%;
+  padding: 11px;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #a31515;
+}
+
+.error-message {
+  background: #fdecea;
+  color: #c62828;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.success-message {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.login-link {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.login-link a {
+  color: #c62828;
+  font-weight: 600;
+  text-decoration: none;
+}

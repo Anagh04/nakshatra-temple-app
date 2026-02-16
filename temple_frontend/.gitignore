@@ -45,3 +45,19 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Django
+__pycache__/
+*.pyc
+db.sqlite3
+.env
+venv/
+
+# React (if exists)
+node_modules/
+dist/
+build/
+
+# VS Code
+.vscode/
+

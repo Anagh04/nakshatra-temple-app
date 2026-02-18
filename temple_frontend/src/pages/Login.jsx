@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import API from "../services/api";   // ✅ Correct path
 import "./Login.css";
 
 function Login() {
@@ -19,17 +19,25 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/token/",
-        { username, password }
-      );
+      const response = await API.post("token/", {
+        username,
+        password,
+      });
 
       localStorage.setItem("access", response.data.access);
       localStorage.setItem("refresh", response.data.refresh);
 
       navigate("/add-devotee");
-    } catch (error) {
-      setError("Invalid username or password");
+
+    } catch (err) {
+      console.error(err);
+
+      if (err.response && err.response.status === 401) {
+        setError("Invalid username or password");
+      } else {
+        setError("Cannot connect to server. Please try again.");
+      }
+
     } finally {
       setLoading(false);
     }
@@ -38,12 +46,11 @@ function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2 className="login-title"></h2>
+        <h2 className="login-title">Nakshatra Temple</h2>
         <p className="login-subtitle">Sign in to continue</p>
 
         <form onSubmit={handleLogin}>
 
-          {/* Username */}
           <div className="form-group">
             <label>Username</label>
             <input
@@ -55,7 +62,6 @@ function Login() {
             />
           </div>
 
-          {/* Password */}
           <div className="form-group password-group">
             <label>Password</label>
 
@@ -83,9 +89,8 @@ function Login() {
             {loading ? "Logging in..." : "Login"}
           </button>
 
-          {/* 🔥 Register Link */}
           <div className="auth-switch">
-          Don’t have an account? <Link to="/register">Register</Link>
+            Don’t have an account? <Link to="/register">Register</Link>
           </div>
 
         </form>

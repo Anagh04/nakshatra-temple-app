@@ -1,8 +1,12 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+
 from django.contrib.auth.models import User
+from django.db import IntegrityError
+
 import pandas as pd
 
 from .models import Devotee
@@ -32,14 +36,22 @@ class DevoteeViewSet(viewsets.ModelViewSet):
 # ============================================================
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@parser_classes([JSONParser])
 def register(request):
-    username = request.data.get("username")
-    email = request.data.get("email")
-    password = request.data.get("password")
+
+    username = request.data.get("username", "").strip()
+    email = request.data.get("email", "").strip()
+    password = request.data.get("password", "").strip()
+
+    # Debug (remove later if needed)
+    print("REGISTER DATA:", request.data)
 
     if not username or not email or not password:
         return Response(
-            {"error": "All fields are required"},
+            {
+                "error": "All fields are required",
+                "received_data": request.data,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -55,11 +67,17 @@ def register(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    User.objects.create_user(
-        username=username,
-        email=email,
-        password=password,
-    )
+    try:
+        User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+        )
+    except IntegrityError:
+        return Response(
+            {"error": "User creation failed"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     return Response(
         {"message": "User registered successfully"},
@@ -72,7 +90,9 @@ def register(request):
 # ============================================================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def bulk_upload(request):
+
     file = request.FILES.get("file")
     selected_nakshatra = request.data.get("nakshatra")
 
@@ -89,26 +109,23 @@ def bulk_upload(request):
         )
 
     try:
-        # Detect file type
         if file.name.endswith(".csv"):
             df = pd.read_csv(file)
         elif file.name.endswith(".xlsx"):
             df = pd.read_excel(file, engine="openpyxl")
         else:
             return Response(
-                {"error": "Unsupported file format. Please upload CSV or XLSX."},
+                {"error": "Upload CSV or XLSX file"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Normalize column names
         df.columns = df.columns.str.strip().str.lower()
 
         required_columns = {"name", "phone"}
-
         if not required_columns.issubset(set(df.columns)):
             return Response(
                 {
-                    "error": f"File must contain columns: {required_columns}. Found: {df.columns.tolist()}"
+                    "error": f"Required columns missing. Needed: {required_columns}"
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -120,9 +137,9 @@ def bulk_upload(request):
         for _, row in df.iterrows():
             name = str(row.get("name", "")).strip()
 
-            # Fix scientific phone numbers
             phone_raw = row.get("phone")
             phone = ""
+
             if pd.notna(phone_raw):
                 try:
                     phone = str(int(float(phone_raw)))
@@ -131,12 +148,10 @@ def bulk_upload(request):
 
             country_code = str(row.get("countrycode", "")).strip()
 
-            # Invalid row check
             if not name or not phone:
                 invalid_count += 1
                 continue
 
-            # Manual duplicate check
             exists = Devotee.objects.filter(
                 name=name,
                 CountryCode=country_code,
@@ -158,7 +173,7 @@ def bulk_upload(request):
 
         return Response(
             {
-                "message": "Bulk upload completed successfully",
+                "message": "Bulk upload completed",
                 "created": created_count,
                 "duplicates": duplicate_count,
                 "invalid": invalid_count,
@@ -184,7 +199,7 @@ def delete_nakshatra_data(request, nakshatra_name):
 
     if not devotees.exists():
         return Response(
-            {"message": "No devotees found for this Nakshatra"},
+            {"message": "No devotees found"},
             status=status.HTTP_404_NOT_FOUND,
         )
 

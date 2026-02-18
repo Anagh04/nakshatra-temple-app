@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import API from "../services/api";
 import "./Register.css";
 
 function Register() {
@@ -41,35 +41,34 @@ function Register() {
     setLoading(true);
 
     try {
-      await axios.post("http://127.0.0.1:8000/api/register/", {
+      await API.post("register/", {
         username: formData.username,
         email: formData.email,
         password: formData.password,
       });
 
-      setSuccess("Registration successful! Redirecting to login...");
+      setSuccess("Registration successful! Redirecting...");
 
       setTimeout(() => {
         navigate("/");
       }, 1500);
 
     } catch (error) {
-      if (error.response) {
-        if (typeof error.response.data === "string") {
-          setError("Server error. Please check backend register API.");
-          console.error("HTML Response:", error.response.data);
-        } 
-        else if (typeof error.response.data === "object") {
-          const values = Object.values(error.response.data);
+      if (error.response?.data) {
+        const data = error.response.data;
+
+        if (typeof data === "string") {
+          setError(data);
+        } else if (typeof data === "object") {
+          const values = Object.values(data);
           setError(
             Array.isArray(values[0]) ? values[0][0] : values[0]
           );
-        } 
-        else {
+        } else {
           setError("Registration failed");
         }
       } else {
-        setError("Cannot connect to server. Is backend running?");
+        setError("Cannot connect to server");
       }
     } finally {
       setLoading(false);
@@ -106,7 +105,6 @@ function Register() {
             />
           </div>
 
-          {/* Password */}
           <div className="form-group">
             <label>Password</label>
             <div className="password-wrapper">
@@ -126,7 +124,6 @@ function Register() {
             </div>
           </div>
 
-          {/* Confirm Password */}
           <div className="form-group">
             <label>Confirm Password</label>
             <div className="password-wrapper">

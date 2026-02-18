@@ -15,6 +15,9 @@ function AddDevotee() {
     nakshatra: "",
   });
 
+  const [bulkNakshatra, setBulkNakshatra] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,6 +31,8 @@ function AddDevotee() {
     "Chathayam","Pooruruttathi",
     "Uthruttathi","Revathi"
   ];
+
+  // ================= SINGLE ENTRY =================
 
   const handleChange = (e) => {
     setFormData({
@@ -60,12 +65,7 @@ function AddDevotee() {
     setLoading(true);
 
     try {
-      await API.post("devotees/", {
-        name: formData.name,
-        country_code: formData.country_code,
-        phone: formData.phone,
-        nakshatra: formData.nakshatra,
-      });
+      await API.post("devotees/", formData);
 
       setSuccess("Devotee added successfully!");
 
@@ -79,12 +79,58 @@ function AddDevotee() {
     } catch (error) {
       let message = "Error adding devotee";
 
-      if (error.response && error.response.data) {
+      if (error.response?.data) {
         const values = Object.values(error.response.data);
         message = Array.isArray(values[0]) ? values[0][0] : values[0];
       }
 
       setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= BULK UPLOAD =================
+
+  const handleBulkUpload = async () => {
+    if (!selectedFile) {
+      setError("Please select a CSV or Excel file");
+      return;
+    }
+
+    if (!bulkNakshatra) {
+      setError("Please select Nakshatra for bulk upload");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    const data = new FormData();
+    data.append("file", selectedFile);
+    data.append("nakshatra", bulkNakshatra);
+
+    try {
+      const response = await API.post("bulk-upload/", data);
+
+      setSuccess(
+        `Upload Completed Successfully!
+
+Created: ${response.data.created}
+Duplicates: ${response.data.duplicates}
+Invalid Rows: ${response.data.invalid}`
+      );
+
+      setSelectedFile(null);
+      setBulkNakshatra("");
+
+    } catch (error) {
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else {
+        setError("Bulk upload failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -99,9 +145,8 @@ function AddDevotee() {
   return (
     <div className="dashboard-container">
 
+      {/* HEADER */}
       <div className="dashboard-header">
-        <h2></h2>
-
         <div className="header-actions">
           <button
             onClick={() => navigate("/nakshatras")}
@@ -119,8 +164,9 @@ function AddDevotee() {
         </div>
       </div>
 
+      {/* SINGLE ENTRY */}
       <div className="form-card">
-        <h3>Add Devotee</h3>
+        <h3>Single Upload</h3>
 
         <form onSubmit={handleSubmit}>
 
@@ -139,7 +185,7 @@ function AddDevotee() {
             <label>Phone Number</label>
             <PhoneInput
               country={"in"}
-              enableSearch={true}
+              enableSearch
               countryCodeEditable={false}
               value={formData.country_code + formData.phone}
               onChange={handlePhoneChange}
@@ -163,15 +209,48 @@ function AddDevotee() {
             </select>
           </div>
 
-          {error && <div className="error-box">{error}</div>}
-          {success && <div className="success-box">{success}</div>}
-
           <button type="submit" disabled={loading}>
             {loading ? "Saving..." : "Enter Data"}
           </button>
-
         </form>
       </div>
+
+      {/* BULK ENTRY */}
+      <div className="form-card" style={{ marginTop: "30px" }}>
+        <h3>Bulk Upload (Excel / CSV)</h3>
+
+        <div className="form-group">
+          <label>Select Nakshatra</label>
+          <select
+            value={bulkNakshatra}
+            onChange={(e) => setBulkNakshatra(e.target.value)}
+            required
+          >
+            <option value="">Select Nakshatra</option>
+            {nakshatras.map((n, index) => (
+              <option key={index} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={(e) => setSelectedFile(e.target.files[0])}
+          />
+        </div>
+
+        <button onClick={handleBulkUpload} disabled={loading}>
+          {loading ? "Uploading..." : "Upload File"}
+        </button>
+      </div>
+
+      {error && <div className="error-box">{error}</div>}
+      {success && <div className="success-box">{success}</div>}
+
     </div>
   );
 }

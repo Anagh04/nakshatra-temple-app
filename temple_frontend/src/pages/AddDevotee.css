@@ -1,158 +1,289 @@
-/* ===== Dashboard Layout ===== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+/* ===============================
+   MAIN CONTAINER
+================================= */
 
 .dashboard-container {
   min-height: 100vh;
-  background: #f4f6f9;
-  display: flex;
-  flex-direction: column;
+  font-family: 'Poppins', sans-serif;
+  padding: 40px 20px;
+  background: url("../assets/zodiac-bg.jpeg") center/cover no-repeat;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* ===== Header ===== */
+/* Dark overlay */
+.dashboard-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 5, 40, 0.85),
+    rgba(40, 0, 70, 0.85)
+  );
+}
+
+.dashboard-container > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ===============================
+   HEADER
+================================= */
 
 .dashboard-header {
-  background: #d32f2f;
-  color: white;
-  padding: 18px 40px;
+  width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 0 40px;
+  margin-bottom: 40px;
+  box-sizing: border-box;
+  animation: fadeSlide 0.6s ease forwards;
 }
 
-.dashboard-header h2 {
-  font-size: 22px;
-  font-weight: 600;
+.header-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .header-btn {
-  background: white;
-  color: #d32f2f;
-  border: none;
+  width: auto;
   padding: 8px 16px;
-  margin-left: 10px;
-  border-radius: 6px;
-  font-weight: 500;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
   cursor: pointer;
-  transition: 0.3s ease;
+  color: white;
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;   /* 👈 this creates space between buttons */
-}
+
 .header-btn:hover {
-  background: #fbe9e7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.6);
 }
 
 .logout-btn {
-  background: #1976d2;
-  color: white;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
 }
 
-.logout-btn:hover {
-  background: #125ea8;
-}
-
-/* ===== Form Card ===== */
+/* ===============================
+   FORM CARDS
+================================= */
 
 .form-card {
-  background: white;
-  width: 420px;
-  margin: 60px auto;
+  max-width: 650px;
+  margin: auto;
   padding: 35px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  animation: smoothFade 0.7s ease forwards;
+  transform: translateY(20px);
+  opacity: 0;
+  margin-bottom: 40px;
 }
 
 .form-card h3 {
   margin-bottom: 25px;
-  color: #d32f2f;
-  font-weight: 600;
+  font-size: 22px;
+  color: #f1f5f9;
 }
 
-/* ===== Form Fields ===== */
+/* ===============================
+   FORM INPUTS
+================================= */
 
 .form-group {
   margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
 }
 
-.form-group label {
+label {
+  display: block;
+  font-size: 14px;
   margin-bottom: 6px;
-  font-weight: 500;
-  font-size: 14px;
-  color: #444;
+  color: #e2e8f0;
 }
 
-.form-group input,
-.form-group select {
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+input,
+select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
   font-size: 14px;
-  transition: 0.2s ease;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-group input:focus,
-.form-group select:focus {
-  border-color: #d32f2f;
+input:focus,
+select:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+  border-color: #a855f7;
+  box-shadow: 0 0 10px #7c3aed;
 }
 
-/* ===== Phone Input Fix ===== */
-
+/* Phone input main box */
 .react-tel-input .form-control {
   width: 100% !important;
-  border-radius: 6px !important;
-  border: 1px solid #ccc !important;
-  height: 40px !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  color: white !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
 
-.react-tel-input .flag-dropdown {
-  border-radius: 6px 0 0 6px !important;
+/* ===============================
+   REMOVE WHITE HOVER IN COUNTRY LIST
+================================= */
+
+.react-tel-input .country-list {
+  background: rgba(20, 10, 50, 0.95) !important;
+  color: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(12px);
 }
 
-/* ===== Messages ===== */
+/* Remove white hover */
+.react-tel-input .country-list .country:hover {
+  background: rgba(124, 58, 237, 0.3) !important;
+  color: #fff !important;
+}
+
+/* Remove white selected highlight */
+.react-tel-input .country-list .country.highlight {
+  background: linear-gradient(90deg, #7c3aed, #3b82f6) !important;
+  color: #fff !important;
+}
+
+/* Remove default white active state */
+.react-tel-input .country-list .country.active {
+  background: rgba(124, 58, 237, 0.35) !important;
+  color: #fff !important;
+}
+
+/* Remove white background completely */
+.react-tel-input .country-list li {
+  background: transparent !important;
+}
+
+/* Fix search box */
+.react-tel-input .country-list .search-box {
+  background: rgba(0, 0, 0, 0.7) !important;
+  color: white !important;
+  border: 1px solid #7c3aed !important;
+}
+
+.react-tel-input .country-list .search-box::placeholder {
+  color: #ccc !important;
+}
+
+/* ===============================
+   FORM BUTTONS
+================================= */
+
+.form-card button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #a855f7, #3b82f6);
+  color: white;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-card button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.6);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===============================
+   ERROR & SUCCESS
+================================= */
+
+.error-box,
+.success-box {
+  max-width: 650px;
+  margin: 15px auto;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
 
 .error-box {
-  background: #fdecea;
-  color: #d32f2f;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 15px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #fecaca;
 }
 
 .success-box {
-  background: #e8f5e9;
-  color: #2e7d32;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 15px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid #22c55e;
+  color: #bbf7d0;
 }
 
-/* ===== Submit Button ===== */
+/* ===============================
+   ANIMATIONS
+================================= */
 
-button[type="submit"] {
-  width: 100%;
-  padding: 11px;
-  border-radius: 6px;
-  border: none;
-  background: #d32f2f;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s ease;
+@keyframes smoothFade {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-button[type="submit"]:hover {
-  background: #b71c1c;
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-button[type="submit"]:disabled {
-  background: #e0e0e0;
-  cursor: not-allowed;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===============================
+   RESPONSIVE
+================================= */
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 15px;
+    justify-content: center;
+  }
+
+  .header-actions {
+    justify-content: center;
+  }
+
+  .form-card {
+    padding: 25px;
+  }
 }

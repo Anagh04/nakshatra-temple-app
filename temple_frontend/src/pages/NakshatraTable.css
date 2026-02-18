@@ -1,247 +1,310 @@
-/* ============================= */
-/* ===== Page Container ======== */
-/* ============================= */
+/* ========================================
+   BACKGROUND (Zodiac Theme)
+======================================== */
 
 .table-container {
   min-height: 100vh;
-  background: #f4f6f9;
-  padding: 60px 80px;
-  font-family: "Segoe UI", sans-serif;
+  padding: 40px 5%;
+  background: linear-gradient(
+      rgba(10, 5, 40, 0.85),
+      rgba(5, 0, 30, 0.9)
+    ),
+    url("../assets/zodiac-bg.jpeg") no-repeat center center/cover;
+
+  color: #ffffff;
+  animation: fadeInPage 0.8s ease-in-out;
 }
 
-
-/* ============================= */
-/* ===== Header Section ======== */
-/* ============================= */
+/* ========================================
+   HEADER SECTION
+======================================== */
 
 .table-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
+  align-items: flex-start;
+  margin-bottom: 25px;
 }
 
 .table-header h2 {
-  color: #d32f2f;
+  font-size: 26px;
   font-weight: 600;
-  font-size: 22px;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg, #8e2de2, #4a00e0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Header Button Wrapper */
 .header-actions {
   display: flex;
-  gap: 15px; /* Same spacing everywhere */
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-/* Header Buttons */
+/* 🔥 FIX — Keep header buttons horizontal */
 .header-btn,
 .download-btn {
-  padding: 9px 18px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  width: auto !important;
+  display: inline-block !important;
+  flex: 0 0 auto !important;
 }
 
-/* Back Button */
-.header-btn {
-  background: #1976d2;
-  color: white;
-}
+/* ========================================
+   BUTTONS
+======================================== */
 
-.header-btn:hover {
-  background: #125ea8;
-  transform: translateY(-2px);
-}
-
-/* Download Button */
-.download-btn {
-  background: #2e7d32;
-  color: white;
-}
-
-.download-btn:hover {
-  background: #1b5e20;
-  transform: translateY(-2px);
-}
-
-
-/* ============================= */
-/* ===== Total Count =========== */
-/* ============================= */
-
-.total-count {
-  margin-bottom: 20px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #444;
-}
-
-
-/* ============================= */
-/* ===== Table Card ============ */
-/* ============================= */
-
-.table-wrapper {
-  background: white;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
-  overflow-x: auto;
-}
-
-
-/* ============================= */
-/* ===== Table Styling ========= */
-/* ============================= */
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead {
-  background: #d32f2f;
-  color: white;
-}
-
-th,
-td {
-  padding: 14px 12px;
-  text-align: left;
-  font-size: 14px;
-}
-
-th {
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-tbody tr {
-  border-bottom: 1px solid #eee;
-  transition: background 0.2s ease;
-}
-
-tbody tr:hover {
-  background: #fafafa;
-}
-
-/* No Data */
-.no-data {
-  text-align: center;
-  padding: 25px;
-  color: #777;
-  font-style: italic;
-}
-
-
-/* ============================= */
-/* ===== Edit Inputs =========== */
-/* ============================= */
-
-td input {
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-  transition: 0.3s ease;
-}
-
-td input:focus {
-  outline: none;
-  border-color: #d32f2f;
-  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.15);
-}
-
-
-/* ============================= */
-/* ===== Action Buttons ======== */
-/* ============================= */
-
-/* Wrapper — EXACT same pattern as header */
-.action-buttons {
-  display: flex;
-  gap: 15px;  /* Same gap as header */
-  align-items: center;
-}
-
-/* Base Button Style */
+.header-btn,
+.download-btn,
 .edit-btn,
 .delete-btn,
 .save-btn,
 .cancel-btn {
-  padding: 9px 18px;   /* Same size as header buttons */
-  border-radius: 6px;  /* Same radius */
+  padding: 8px 16px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
-  font-weight: 500;
   font-size: 14px;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  font-weight: 500;
 }
 
-/* Edit */
-.edit-btn {
-  background: #1976d2;
+/* Gradient Buttons */
+
+.download-btn,
+.edit-btn,
+.save-btn {
+  background: linear-gradient(135deg, #4a00e0, #8e2de2);
   color: white;
 }
 
-.edit-btn:hover {
-  background: #125ea8;
+.download-btn:hover,
+.edit-btn:hover,
+.save-btn:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(142, 45, 226, 0.5);
 }
 
 /* Delete */
+
 .delete-btn {
-  background: #d32f2f;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
   color: white;
 }
 
 .delete-btn:hover {
-  background: #b71c1c;
   transform: translateY(-2px);
-}
-
-/* Save */
-.save-btn {
-  background: #2e7d32;
-  color: white;
-}
-
-.save-btn:hover {
-  background: #1b5e20;
-  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 75, 43, 0.5);
 }
 
 /* Cancel */
+
 .cancel-btn {
-  background: #9e9e9e;
+  background: #555;
   color: white;
 }
 
 .cancel-btn:hover {
-  background: #757575;
-  transform: translateY(-2px);
+  background: #777;
 }
 
+/* ========================================
+   TOTAL COUNT
+======================================== */
 
-/* ============================= */
-/* ===== Responsive Design ===== */
-/* ============================= */
+.total-count {
+  margin-bottom: 20px;
+  font-size: 16px;
+  opacity: 0.9;
+}
 
-@media (max-width: 992px) {
-  .table-container {
-    padding: 40px 30px;
+/* ========================================
+   TABLE WRAPPER (Glass Card)
+======================================== */
+
+.table-wrapper {
+  background: rgba(20, 10, 60, 0.65);
+  backdrop-filter: blur(18px);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(142, 45, 226, 0.3);
+  box-shadow: 0 0 25px rgba(142, 45, 226, 0.2);
+  overflow-x: auto;
+  animation: slideUp 0.6s ease-in-out;
+}
+
+/* ========================================
+   TABLE
+======================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+thead {
+  background: rgba(142, 45, 226, 0.2);
+}
+
+thead th {
+  padding: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+tbody td {
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+/* Name column left aligned */
+
+thead th:nth-child(2),
+tbody td:nth-child(2) {
+  text-align: left;
+  padding-left: 20px;
+}
+
+/* ========================================
+   ROW HOVER EFFECT
+======================================== */
+
+tbody tr:hover {
+  background: rgba(142, 45, 226, 0.1);
+  transform: scale(1.01);
+}
+
+/* ========================================
+   ACTION BUTTON CONTAINER
+======================================== */
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ========================================
+   INPUTS (Edit Mode)
+======================================== */
+
+tbody input {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-align: center;
+  width: 100%;
+  transition: 0.2s ease;
+}
+
+tbody input:focus {
+  border-color: #8e2de2;
+  box-shadow: 0 0 8px rgba(142, 45, 226, 0.6);
+}
+
+/* ========================================
+   NO DATA STYLE
+======================================== */
+
+.no-data {
+  padding: 20px;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* ========================================
+   POPUP OVERLAY
+======================================== */
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(10, 10, 25, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+
+  z-index: 9999;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+/* ========================================
+   POPUP CARD
+======================================== */
+
+.popup-card {
+  position: relative;
+  width: 420px;
+  max-width: 90%;
+  padding: 35px 40px;
+  border-radius: 20px;
+
+  background: rgba(20, 15, 60, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+
+  border: 1px solid rgba(140, 120, 255, 0.25);
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(140, 120, 255, 0.2);
+
+  text-align: center;
+  animation: popupScale 0.3s ease;
+}
+
+/* ========================================
+   ANIMATIONS
+======================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popupScale {
+  from {
+    transform: scale(0.85) translateY(15px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
 }
+
+@keyframes fadeInPage {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+======================================== */
 
 @media (max-width: 768px) {
-
-  .table-container {
-    padding: 30px 15px;
-  }
 
   .table-header {
     flex-direction: column;
@@ -250,24 +313,15 @@ td input:focus {
   }
 
   .header-actions {
-    width: 100%;
-    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
-  .action-buttons {
-    flex-direction: column;
-    width: 100%;
+  table {
+    font-size: 13px;
   }
 
-  .edit-btn,
-  .delete-btn,
-  .save-btn,
-  .cancel-btn {
-    width: 100%;
-  }
-
-  .header-btn,
-  .download-btn {
-    width: 100%;
+  thead th,
+  tbody td {
+    padding: 10px;
   }
 }

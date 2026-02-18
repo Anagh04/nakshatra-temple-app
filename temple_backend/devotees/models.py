@@ -33,7 +33,7 @@ class Devotee(models.Model):
     ]
 
     name = models.CharField(max_length=100)
-    country_code = models.CharField(max_length=20)
+    CountryCode = models.CharField(max_length=20)
     phone = models.CharField(max_length=20)
     nakshatra = models.CharField(max_length=50, choices=NAKSHATRA_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -41,10 +41,10 @@ class Devotee(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'country_code', 'phone'],
+                fields=['name', 'CountryCode', 'phone'],
                 name='unique_devotee'
             )
         ]
 
     def __str__(self):
-        return f"{self.name} - {self.country_code}{self.phone}"
+        return f"{self.name} - {self.CountryCode}{self.phone}"

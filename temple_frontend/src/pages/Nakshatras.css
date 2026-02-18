@@ -1,12 +1,29 @@
-/* ===== Page Container ===== */
+/* =========================================
+   🌌 Cosmic Nakshatra Page
+========================================= */
 
 .nakshatra-container {
   min-height: 100vh;
-  background: #f4f6f9;
-  padding: 60px 80px;
+  padding: 60px 40px;
+  background: 
+    linear-gradient(rgba(10, 5, 30, 0.85), rgba(10, 5, 30, 0.9)),
+    url("../assets/zodiac-bg.jpeg") center/cover no-repeat fixed;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.6s ease-out;
 }
 
-/* ===== Header ===== */
+/* Smooth page fade */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* =========================================
+   Header
+========================================= */
 
 .nakshatra-header {
   margin-bottom: 40px;
@@ -14,59 +31,106 @@
 }
 
 .nakshatra-header h2 {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 600;
-  color: #d32f2f;
-  position: relative;
-  display: inline-block;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg, #a78bfa, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* underline accent */
-.nakshatra-header h2::after {
-  content: "";
-  width: 60%;
-  height: 3px;
-  background: #d32f2f;
-  position: absolute;
-  bottom: -8px;
-  left: 20%;
-  border-radius: 2px;
-}
-
-/* ===== Grid Layout ===== */
+/* =========================================
+   Grid Layout
+========================================= */
 
 .nakshatra-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
+  gap: 25px;
+  width: 100%;
+  max-width: 1100px;
 }
 
-/* ===== Card Design ===== */
+/* =========================================
+   Nakshatra Card
+========================================= */
 
 .nakshatra-card {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
+  background: rgba(20, 10, 45, 0.7);
+  backdrop-filter: blur(15px);
+  border-radius: 18px;
+  padding: 22px;
   text-align: center;
+  font-size: 16px;
   font-weight: 500;
-  font-size: 15px;
+  border: 1px solid rgba(124, 58, 237, 0.4);
   cursor: pointer;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
-  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 
+/* Neon glow border */
+.nakshatra-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  padding: 1px;
+  background: linear-gradient(45deg, #7c3aed, #3b82f6);
+  -webkit-mask: 
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: 0.3s;
+}
+
+/* Hover Effects */
 .nakshatra-card:hover {
-  transform: translateY(-5px);
-  border-color: #d32f2f;
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
-  color: #d32f2f;
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 15px 35px rgba(124, 58, 237, 0.4);
+  background: rgba(25, 15, 55, 0.9);
 }
 
-/* ===== Responsive ===== */
+.nakshatra-card:hover::before {
+  opacity: 1;
+}
+
+/* Click animation */
+.nakshatra-card:active {
+  transform: scale(0.96);
+}
+
+/* =========================================
+   Responsive Improvements
+========================================= */
 
 @media (max-width: 768px) {
   .nakshatra-container {
     padding: 40px 20px;
   }
+
+  .nakshatra-header h2 {
+    font-size: 26px;
+  }
+
+  .nakshatra-card {
+    padding: 18px;
+    font-size: 14px;
+  }
+}
+
+/* =========================================
+   Subtle floating animation
+========================================= */
+
+.nakshatra-card {
+  animation: floatCard 4s ease-in-out infinite alternate;
+}
+
+@keyframes floatCard {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
 }

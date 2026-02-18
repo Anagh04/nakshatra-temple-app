@@ -28,7 +28,11 @@ SECRET_KEY = 'django-insecure-1279f5l0aaer#tjn=h-2h$)79%v&_cmhn0umsts*-9aklt)-mj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "nakshatra-temple-app.onrender.com",
+    "localhost",
+    "127.0.0.1"
+]
 
 
 # Application definition

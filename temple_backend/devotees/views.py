@@ -14,13 +14,14 @@ from .serializers import DevoteeSerializer
 
 
 # ============================================================
-# Devotee ViewSet (JWT Protected)
+# Devotee ViewSet (Single Entry + JWT Protected)
 # ============================================================
 class DevoteeViewSet(viewsets.ModelViewSet):
     queryset = Devotee.objects.all().order_by("created_at")
     serializer_class = DevoteeSerializer
     permission_classes = [IsAuthenticated]
 
+    # 🔍 Filter by nakshatra
     def get_queryset(self):
         queryset = super().get_queryset()
         nakshatra = self.request.query_params.get("nakshatra")
@@ -29,6 +30,48 @@ class DevoteeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(nakshatra=nakshatra)
 
         return queryset
+
+    # ✅ FIXED CREATE METHOD (Single Entry)
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+
+            name = serializer.validated_data.get("name")
+            phone = serializer.validated_data.get("phone")
+            country_code = serializer.validated_data.get("country_code")
+            nakshatra = serializer.validated_data.get("nakshatra")
+
+            # 🔁 Duplicate check
+            exists = Devotee.objects.filter(
+                name=name,
+                phone=phone,
+                country_code=country_code,
+                nakshatra=nakshatra,
+            ).exists()
+
+            if exists:
+                return Response(
+                    {"error": "Devotee already exists for this Nakshatra"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            serializer.save()
+
+            return Response(
+                {
+                    "message": "Devotee added successfully",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        # ❌ Validation errors
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 # ============================================================
@@ -144,18 +187,17 @@ def bulk_upload(request):
                 invalid_count += 1
                 continue
 
-            # ✅ FIXED: country_code (lowercase)
             exists = Devotee.objects.filter(
                 name=name,
+                phone=phone,
                 country_code=country_code,
-                phone=phone
+                nakshatra=selected_nakshatra,
             ).exists()
 
             if exists:
                 duplicate_count += 1
                 continue
 
-            # ✅ FIXED: country_code (lowercase)
             Devotee.objects.create(
                 name=name,
                 phone=phone,

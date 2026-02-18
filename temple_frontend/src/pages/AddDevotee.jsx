@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
@@ -31,6 +31,14 @@ function AddDevotee() {
     "Chathayam","Pooruruttathi",
     "Uthruttathi","Revathi"
   ];
+
+  // ================= AUTO HIDE SUCCESS =================
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   // ================= SINGLE ENTRY =================
 
@@ -66,9 +74,9 @@ function AddDevotee() {
     setLoading(true);
 
     try {
-      await API.post("devotees/", formData);
+      const response = await API.post("devotees/", formData);
 
-      setSuccess("Devotee added successfully!");
+      setSuccess(response.data.message || "Devotee added successfully!");
 
       setFormData({
         name: "",
@@ -85,9 +93,20 @@ function AddDevotee() {
 
         if (typeof data === "string") {
           message = data;
-        } else if (typeof data === "object") {
-          const values = Object.values(data);
-          message = Array.isArray(values[0]) ? values[0][0] : values[0];
+        } 
+        else if (typeof data === "object") {
+
+          if (data.duplicate) {
+            message = data.duplicate;
+          } 
+          else if (data.error) {
+            message = data.error;
+          } 
+          else {
+            const firstKey = Object.keys(data)[0];
+            const value = data[firstKey];
+            message = Array.isArray(value) ? value[0] : value;
+          }
         }
       }
 
@@ -100,6 +119,9 @@ function AddDevotee() {
   // ================= BULK UPLOAD =================
 
   const handleBulkUpload = async () => {
+    setError("");
+    setSuccess("");
+
     if (!selectedFile) {
       setError("Please select a CSV or Excel file");
       return;
@@ -110,8 +132,6 @@ function AddDevotee() {
       return;
     }
 
-    setError("");
-    setSuccess("");
     setLoading(true);
 
     const data = new FormData();
@@ -123,7 +143,6 @@ function AddDevotee() {
 
       setSuccess(
         `Upload Completed Successfully!
-
 Created: ${response.data.created}
 Duplicates: ${response.data.duplicates}
 Invalid Rows: ${response.data.invalid}`
@@ -154,7 +173,6 @@ Invalid Rows: ${response.data.invalid}`
   return (
     <div className="dashboard-container">
 
-      {/* HEADER */}
       <div className="dashboard-header">
         <div className="header-actions">
           <button

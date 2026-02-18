@@ -47,7 +47,7 @@ INSTALLED_APPS = [
 # ==================================================
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",   # MUST BE FIRST
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -56,7 +56,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
 # ==================================================
 # REST FRAMEWORK
 # ==================================================
@@ -80,11 +79,12 @@ SIMPLE_JWT = {
 # ==================================================
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React Local
-    "https://nakshatra-temple-app.onrender.com",  # Production
+    "http://localhost:5173",
+    "http://localhost:5174",   # ADD THIS
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
 
 # ==================================================
 # URL CONFIG

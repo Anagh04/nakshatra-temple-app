@@ -18,7 +18,7 @@ function NakshatraTable() {
 
   const [editData, setEditData] = useState({
     name: "",
-    CountryCode: "",
+    country_code: "",
     phone: "",
   });
 
@@ -53,7 +53,7 @@ function NakshatraTable() {
     setEditingId(devotee.id);
     setEditData({
       name: devotee.name,
-      CountryCode: devotee.CountryCode,
+      country_code: devotee.country_code,
       phone: devotee.phone,
     });
   };
@@ -94,11 +94,11 @@ function NakshatraTable() {
     doc.text(`${name} Nakshatra Devotee List`, 14, 15);
 
     autoTable(doc, {
-      head: [["No", "Name", "CountryCode", "Phone", "Date & Time"]],
+      head: [["No", "Name", "Country Code", "Phone", "Date & Time"]],
       body: devotees.map((d, i) => [
         i + 1,
         d.name,
-        d.CountryCode,
+        d.country_code,
         d.phone,
         new Date(d.created_at).toLocaleString(),
       ]),
@@ -116,7 +116,7 @@ function NakshatraTable() {
     worksheet.columns = [
       { header: "No", key: "no", width: 10 },
       { header: "Name", key: "name", width: 25 },
-      { header: "CountryCode", key: "code", width: 15 },
+      { header: "Country Code", key: "code", width: 15 },
       { header: "Phone", key: "phone", width: 20 },
       { header: "Date & Time", key: "date", width: 25 },
     ];
@@ -125,7 +125,7 @@ function NakshatraTable() {
       worksheet.addRow({
         no: i + 1,
         name: d.name,
-        code: d.CountryCode,
+        code: d.country_code,
         phone: d.phone,
         date: new Date(d.created_at).toLocaleString(),
       });
@@ -147,7 +147,7 @@ function NakshatraTable() {
     const headers = [
       "No",
       "Name",
-      "CountryCode",
+      "Country Code",
       "Phone",
       "Date & Time",
     ];
@@ -155,7 +155,7 @@ function NakshatraTable() {
     const rows = devotees.map((d, i) => [
       i + 1,
       d.name,
-      d.CountryCode,
+      d.country_code,
       d.phone,
       new Date(d.created_at).toLocaleString(),
     ]);
@@ -211,7 +211,7 @@ function NakshatraTable() {
             <tr>
               <th>No</th>
               <th>Name</th>
-              <th>CountryCode</th>
+              <th>Country Code</th>
               <th>Phone</th>
               <th>Date & Time</th>
               <th>Action</th>
@@ -246,16 +246,16 @@ function NakshatraTable() {
                   <td>
                     {editingId === devotee.id ? (
                       <input
-                        value={editData.CountryCode}
+                        value={editData.country_code}
                         onChange={(e) =>
                           setEditData({
                             ...editData,
-                            CountryCode: e.target.value,
+                            country_code: e.target.value,
                           })
                         }
                       />
                     ) : (
-                      devotee.CountryCode
+                      devotee.country_code
                     )}
                   </td>
 

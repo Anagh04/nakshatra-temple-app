@@ -12,7 +12,7 @@ class DevoteeSerializer(serializers.ModelSerializer):
     def validate(self, data):
         name = data.get("name", "").strip()
         phone = data.get("phone", "").strip()
-        CountryCode = data.get("CountryCode", "").strip()
+        country_code = data.get("country_code", "").strip()
 
         if not name or not phone:
             raise serializers.ValidationError(
@@ -21,7 +21,7 @@ class DevoteeSerializer(serializers.ModelSerializer):
 
         queryset = Devotee.objects.filter(
             name=name,
-            CountryCode=CountryCode,
+            country_code=country_code,   # ✅ FIXED
             phone=phone
         )
 

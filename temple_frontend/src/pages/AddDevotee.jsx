@@ -35,21 +35,22 @@ function AddDevotee() {
   // ================= SINGLE ENTRY =================
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handlePhoneChange = (value, country) => {
-    const countryCode = "+" + country.dialCode;
-    const phoneNumber = value.slice(country.dialCode.length);
+    const dialCode = country?.dialCode || "";
+    const countryCode = dialCode ? "+" + dialCode : "";
+    const phoneNumber = dialCode ? value.slice(dialCode.length) : value;
 
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       country_code: countryCode,
       phone: phoneNumber,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -57,8 +58,8 @@ function AddDevotee() {
     setError("");
     setSuccess("");
 
-    if (!formData.phone) {
-      setError("Please enter phone number");
+    if (!formData.name || !formData.phone || !formData.nakshatra) {
+      setError("All fields are required");
       return;
     }
 
@@ -80,8 +81,14 @@ function AddDevotee() {
       let message = "Error adding devotee";
 
       if (error.response?.data) {
-        const values = Object.values(error.response.data);
-        message = Array.isArray(values[0]) ? values[0][0] : values[0];
+        const data = error.response.data;
+
+        if (typeof data === "string") {
+          message = data;
+        } else if (typeof data === "object") {
+          const values = Object.values(data);
+          message = Array.isArray(values[0]) ? values[0][0] : values[0];
+        }
       }
 
       setError(message);
@@ -136,6 +143,8 @@ Invalid Rows: ${response.data.invalid}`
     }
   };
 
+  // ================= LOGOUT =================
+
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
@@ -187,7 +196,7 @@ Invalid Rows: ${response.data.invalid}`
               country={"in"}
               enableSearch
               countryCodeEditable={false}
-              value={formData.country_code + formData.phone}
+              value={(formData.country_code || "") + (formData.phone || "")}
               onChange={handlePhoneChange}
             />
           </div>

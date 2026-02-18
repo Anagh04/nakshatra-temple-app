@@ -43,15 +43,9 @@ def register(request):
     email = request.data.get("email", "").strip()
     password = request.data.get("password", "").strip()
 
-    # Debug (remove later if needed)
-    print("REGISTER DATA:", request.data)
-
     if not username or not email or not password:
         return Response(
-            {
-                "error": "All fields are required",
-                "received_data": request.data,
-            },
+            {"error": "All fields are required"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -124,9 +118,7 @@ def bulk_upload(request):
         required_columns = {"name", "phone"}
         if not required_columns.issubset(set(df.columns)):
             return Response(
-                {
-                    "error": f"Required columns missing. Needed: {required_columns}"
-                },
+                {"error": f"Required columns missing. Needed: {required_columns}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -152,9 +144,10 @@ def bulk_upload(request):
                 invalid_count += 1
                 continue
 
+            # ✅ FIXED: country_code (lowercase)
             exists = Devotee.objects.filter(
                 name=name,
-                CountryCode=country_code,
+                country_code=country_code,
                 phone=phone
             ).exists()
 
@@ -162,11 +155,12 @@ def bulk_upload(request):
                 duplicate_count += 1
                 continue
 
+            # ✅ FIXED: country_code (lowercase)
             Devotee.objects.create(
                 name=name,
                 phone=phone,
                 nakshatra=selected_nakshatra,
-                CountryCode=country_code,
+                country_code=country_code,
             )
 
             created_count += 1

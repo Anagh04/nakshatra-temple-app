@@ -7,6 +7,8 @@ from .views import (
     register,
     bulk_upload,
     delete_nakshatra_data,
+    delete_all_duplicates,   # ✅ NEW
+    delete_all_invalids,     # ✅ NEW
 )
 
 router = DefaultRouter()
@@ -14,8 +16,10 @@ router = DefaultRouter()
 # Main Devotee table
 router.register(r'devotees', DevoteeViewSet, basename='devotee')
 
-# 🔥 Corrected routes
+# Duplicates
 router.register(r'duplicates', DuplicateEntryViewSet, basename='duplicate')
+
+# Invalids
 router.register(r'invalids', InvalidEntryViewSet, basename='invalid')
 
 urlpatterns = [
@@ -29,6 +33,10 @@ urlpatterns = [
         delete_nakshatra_data,
         name='delete-nakshatra'
     ),
+
+    # ✅ NEW FAST DELETE APIs
+    path('delete-all-duplicates/', delete_all_duplicates, name='delete-all-duplicates'),
+    path('delete-all-invalids/', delete_all_invalids, name='delete-all-invalids'),
 ]
 
 urlpatterns += router.urls

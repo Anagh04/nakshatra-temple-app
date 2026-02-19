@@ -128,7 +128,6 @@ def bulk_upload(request):
 
     try:
 
-        # Read file
         if file.name.endswith(".csv"):
             df = pd.read_csv(file)
         elif file.name.endswith(".xlsx"):
@@ -139,7 +138,6 @@ def bulk_upload(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Clean column names
         df.columns = (
             df.columns
             .str.strip()
@@ -147,7 +145,6 @@ def bulk_upload(request):
             .str.replace(" ", "")
         )
 
-        # Rename columns
         column_mapping = {}
 
         for col in df.columns:
@@ -192,7 +189,6 @@ def bulk_upload(request):
                 except:
                     phone = str(phone_raw).strip()
 
-            # Missing fields
             if not name or not phone or not raw_nakshatra or not country_code:
                 InvalidEntry.objects.create(
                     name=name,
@@ -207,7 +203,6 @@ def bulk_upload(request):
             raw_nakshatra = raw_nakshatra.replace("shw", "sw")
             formatted_nakshatra = raw_nakshatra.upper()
 
-            # Invalid nakshatra
             if formatted_nakshatra not in valid_nakshatras:
                 InvalidEntry.objects.create(
                     name=name,
@@ -219,7 +214,6 @@ def bulk_upload(request):
                 invalid_count += 1
                 continue
 
-            # Duplicate check
             exists = Devotee.objects.filter(
                 name=name,
                 phone=phone,
@@ -289,6 +283,46 @@ def delete_nakshatra_data(request, nakshatra_name):
     return Response(
         {
             "message": f"{deleted_count} devotees deleted successfully",
+            "deleted": deleted_count,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+# ============================================================
+# DELETE ALL DUPLICATES (NEW FAST API)
+# ============================================================
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_all_duplicates(request):
+
+    deleted_count = DuplicateEntry.objects.count()
+    DuplicateEntry.objects.all().delete()
+
+    return Response(
+        {
+            "message": "All duplicate entries deleted successfully",
+            "deleted": deleted_count,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+# ============================================================
+# DELETE ALL INVALIDS (NEW FAST API)
+# ============================================================
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_all_invalids(request):
+
+    deleted_count = InvalidEntry.objects.count()
+    InvalidEntry.objects.all().delete()
+
+    return Response(
+        {
+            "message": "All invalid entries deleted successfully",
             "deleted": deleted_count,
         },
         status=status.HTTP_200_OK,

@@ -13,8 +13,6 @@ function NakshatraTable({ type = "devotees" }) {
 
   const [data, setData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({});
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -61,6 +59,71 @@ function NakshatraTable({ type = "devotees" }) {
       item.name?.toUpperCase().includes(searchTerm.toUpperCase()) ||
       item.phone?.includes(searchTerm)
   );
+
+  // ================= CONVERT INVALID =================
+  const handleConvert = async (item) => {
+    try {
+      // Create Devotee
+      await API.post("devotees/", {
+        name: item.name.toUpperCase(),
+        country_code: item.country_code,
+        phone: item.phone,
+        nakshatra: item.nakshatra.toUpperCase(),
+      });
+
+      // Delete from invalid table
+      await API.delete(`invalids/${item.id}/`);
+
+      fetchData();
+
+      alert("Converted to Devotee successfully!");
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+      alert("Conversion failed. Please check Nakshatra value.");
+    }
+  };
+
+  // ================= DELETE SINGLE =================
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this entry?")) return;
+
+    try {
+      const endpoint = isDuplicatePage
+        ? `duplicates/${id}/`
+        : isInvalidPage
+        ? `invalids/${id}/`
+        : `devotees/${id}/`;
+
+      await API.delete(endpoint);
+      fetchData();
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+    }
+  };
+
+  // ================= DELETE ALL (FAST VERSION) =================
+  const handleDeleteAll = async () => {
+    setLoading(true);
+
+    try {
+      if (isDuplicatePage) {
+        await API.delete("delete-all-duplicates/");
+      } else if (isInvalidPage) {
+        await API.delete("delete-all-invalids/");
+      } else {
+        await API.delete(
+          `delete-nakshatra/${encodeURIComponent(nakshatraName)}/`
+        );
+      }
+
+      setShowConfirmPopup(false);
+      fetchData();
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ================= PDF =================
   const downloadPDF = () => {
@@ -149,52 +212,6 @@ function NakshatraTable({ type = "devotees" }) {
         ? "Invalid_Entries.csv"
         : `${nakshatraName}_nakshatra.csv`
     );
-  };
-
-  // ================= DELETE SINGLE =================
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this entry?")) return;
-
-    try {
-      const endpoint = isDuplicatePage
-        ? `duplicates/${id}/`
-        : isInvalidPage
-        ? `invalids/${id}/`
-        : `devotees/${id}/`;
-
-      await API.delete(endpoint);
-      fetchData();
-    } catch (err) {
-      console.error(err.response?.data || err.message);
-    }
-  };
-
-  // ================= DELETE ALL =================
-  const handleDeleteAll = async () => {
-    setLoading(true);
-
-    try {
-      if (isDuplicatePage) {
-        for (const item of data) {
-          await API.delete(`duplicates/${item.id}/`);
-        }
-      } else if (isInvalidPage) {
-        for (const item of data) {
-          await API.delete(`invalids/${item.id}/`);
-        }
-      } else {
-        await API.delete(
-          `delete-nakshatra/${encodeURIComponent(nakshatraName)}/`
-        );
-      }
-
-      setShowConfirmPopup(false);
-      fetchData();
-    } catch (err) {
-      console.error(err.response?.data || err.message);
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -287,6 +304,19 @@ function NakshatraTable({ type = "devotees" }) {
                     )}
 
                     <td>
+                      {isInvalidPage && (
+                        <button
+                          style={{
+                            marginRight: "10px",
+                            backgroundColor: "#28a745",
+                            color: "white",
+                          }}
+                          onClick={() => handleConvert(item)}
+                        >
+                          Convert
+                        </button>
+                      )}
+
                       <button onClick={() => handleDelete(item.id)}>
                         Delete
                       </button>

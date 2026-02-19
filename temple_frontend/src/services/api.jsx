@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://temple-backend.onrender.com/",
+  baseURL: "https://temple-backend.onrender.com/api/",
 });
 
 API.interceptors.request.use((config) => {

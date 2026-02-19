@@ -20,9 +20,11 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = [
     "nakshatra-temple-app.onrender.com",
     "nakshatra-temple-app.vercel.app",
+    "varahi-nakshatrapooja-app.vercel.app",
     "localhost",
     "127.0.0.1",
 ]
+
 
 # ==================================================
 # APPLICATIONS

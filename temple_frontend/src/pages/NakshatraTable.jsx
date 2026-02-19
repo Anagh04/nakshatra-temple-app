@@ -21,6 +21,7 @@ function NakshatraTable({ type = "devotees" }) {
   const [error, setError] = useState("");
 
   const isDuplicatePage = type === "duplicates";
+  const isInvalidPage = type === "invalids";
 
   // ================= FETCH =================
   const fetchData = async () => {
@@ -28,9 +29,17 @@ function NakshatraTable({ type = "devotees" }) {
     setError("");
 
     try {
-      const endpoint = isDuplicatePage
-        ? "duplicates/"
-        : `devotees/?nakshatra=${encodeURIComponent(nakshatraName)}`;
+      let endpoint = "";
+
+      if (isDuplicatePage) {
+        endpoint = "duplicates/";
+      } else if (isInvalidPage) {
+        endpoint = "invalids/";
+      } else {
+        endpoint = `devotees/?nakshatra=${encodeURIComponent(
+          nakshatraName
+        )}`;
+      }
 
       const response = await API.get(endpoint);
       setData(response.data);
@@ -53,51 +62,71 @@ function NakshatraTable({ type = "devotees" }) {
       item.phone?.includes(searchTerm)
   );
 
-  // ================= PDF DOWNLOAD =================
+  // ================= PDF =================
   const downloadPDF = () => {
     const doc = new jsPDF();
 
-    const tableColumn = [
-      "No",
-      "Name",
-      "Country Code",
-      "Phone",
-      "Date & Time",
-    ];
+    const columns = isInvalidPage
+      ? ["No", "Name", "Country Code", "Phone", "Nakshatra", "Reason"]
+      : ["No", "Name", "Country Code", "Phone", "Date & Time"];
 
-    const tableRows = filteredData.map((item, index) => [
-      index + 1,
-      item.name,
-      item.country_code,
-      item.phone,
-      item.created_at
-        ? new Date(item.created_at).toLocaleString()
-        : "-",
-    ]);
+    const rows = filteredData.map((item, index) =>
+      isInvalidPage
+        ? [
+            index + 1,
+            item.name,
+            item.country_code,
+            item.phone,
+            item.nakshatra,
+            item.reason,
+          ]
+        : [
+            index + 1,
+            item.name,
+            item.country_code,
+            item.phone,
+            item.created_at
+              ? new Date(item.created_at).toLocaleString()
+              : "-",
+          ]
+    );
 
     autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
+      head: [columns],
+      body: rows,
     });
 
     doc.save(
       isDuplicatePage
         ? "Duplicate_Entries.pdf"
+        : isInvalidPage
+        ? "Invalid_Entries.pdf"
         : `${nakshatraName}_nakshatra.pdf`
     );
   };
 
-  // ================= CSV DOWNLOAD =================
+  // ================= CSV =================
   const downloadCSV = () => {
-    const csvData = filteredData.map((item, index) => ({
-      No: index + 1,
-      Name: item.name,
-      CountryCode: item.country_code,
-      Phone: item.phone,
-      DateTime: item.created_at
-        ? new Date(item.created_at).toLocaleString()
-        : "-",
-    }));
+    const csvData = filteredData.map((item, index) =>
+      isInvalidPage
+        ? {
+            No: index + 1,
+            Name: item.name,
+            CountryCode: item.country_code,
+            Phone: item.phone,
+            Nakshatra: item.nakshatra,
+            Reason: item.reason,
+          }
+        : {
+            No: index + 1,
+            Name: item.name,
+            CountryCode: item.country_code,
+            Phone: item.phone,
+            DateTime: item.created_at
+              ? new Date(item.created_at).toLocaleString()
+              : "-",
+          }
+    );
 
     const worksheet = XLSX.utils.json_to_sheet(csvData);
     const workbook = XLSX.utils.book_new();
@@ -116,6 +145,8 @@ function NakshatraTable({ type = "devotees" }) {
       blob,
       isDuplicatePage
         ? "Duplicate_Entries.csv"
+        : isInvalidPage
+        ? "Invalid_Entries.csv"
         : `${nakshatraName}_nakshatra.csv`
     );
   };
@@ -127,44 +158,11 @@ function NakshatraTable({ type = "devotees" }) {
     try {
       const endpoint = isDuplicatePage
         ? `duplicates/${id}/`
+        : isInvalidPage
+        ? `invalids/${id}/`
         : `devotees/${id}/`;
 
       await API.delete(endpoint);
-      fetchData();
-    } catch (err) {
-      console.error(err.response?.data || err.message);
-    }
-  };
-
-  // ================= EDIT START =================
-  const startEditing = (item) => {
-    setEditingId(item.id);
-    setEditData({
-      name: item.name,
-      country_code: item.country_code,
-      phone: item.phone,
-    });
-  };
-
-  // ================= UPDATE =================
-  const handleUpdate = async (id) => {
-    if (!editData.name || !editData.phone) {
-      alert("Name and Phone cannot be empty");
-      return;
-    }
-
-    try {
-      const endpoint = isDuplicatePage
-        ? `duplicates/${id}/`
-        : `devotees/${id}/`;
-
-      await API.put(endpoint, {
-        ...editData,
-        name: editData.name.toUpperCase(),
-        nakshatra: nakshatraName,
-      });
-
-      setEditingId(null);
       fetchData();
     } catch (err) {
       console.error(err.response?.data || err.message);
@@ -179,6 +177,10 @@ function NakshatraTable({ type = "devotees" }) {
       if (isDuplicatePage) {
         for (const item of data) {
           await API.delete(`duplicates/${item.id}/`);
+        }
+      } else if (isInvalidPage) {
+        for (const item of data) {
+          await API.delete(`invalids/${item.id}/`);
         }
       } else {
         await API.delete(
@@ -201,6 +203,8 @@ function NakshatraTable({ type = "devotees" }) {
         <h2>
           {isDuplicatePage
             ? `DUPLICATE ENTRIES (${data.length})`
+            : isInvalidPage
+            ? `INVALID ENTRIES (${data.length})`
             : `${nakshatraName} NAKSHATRA (${data.length})`}
         </h2>
 
@@ -217,7 +221,11 @@ function NakshatraTable({ type = "devotees" }) {
             className="delete-nakshatra-btn"
             onClick={() => setShowConfirmPopup(true)}
           >
-            {isDuplicatePage ? "Delete All Duplicates" : "Delete Table"}
+            {isDuplicatePage
+              ? "Delete All Duplicates"
+              : isInvalidPage
+              ? "Delete All Invalids"
+              : "Delete Table"}
           </button>
         </div>
       </div>
@@ -244,7 +252,8 @@ function NakshatraTable({ type = "devotees" }) {
                 <th>Name</th>
                 <th>Country Code</th>
                 <th>Phone</th>
-                <th>Date & Time</th>
+                {isInvalidPage ? <th>Nakshatra</th> : <th>Date & Time</th>}
+                {isInvalidPage && <th>Reason</th>}
                 <th>Action</th>
               </tr>
             </thead>
@@ -252,7 +261,7 @@ function NakshatraTable({ type = "devotees" }) {
             <tbody>
               {filteredData.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="no-data">
+                  <td colSpan="7" className="no-data">
                     No data found
                   </td>
                 </tr>
@@ -260,67 +269,27 @@ function NakshatraTable({ type = "devotees" }) {
                 filteredData.map((item, index) => (
                   <tr key={item.id}>
                     <td>{index + 1}</td>
-
-                    <td>
-                      {editingId === item.id ? (
-                        <input
-                          value={editData.name}
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              name: e.target.value.toUpperCase(),
-                            })
-                          }
-                        />
-                      ) : (
-                        item.name
-                      )}
-                    </td>
-
+                    <td>{item.name}</td>
                     <td>{item.country_code}</td>
+                    <td>{item.phone}</td>
+
+                    {isInvalidPage ? (
+                      <>
+                        <td>{item.nakshatra}</td>
+                        <td>{item.reason}</td>
+                      </>
+                    ) : (
+                      <td>
+                        {item.created_at
+                          ? new Date(item.created_at).toLocaleString()
+                          : "-"}
+                      </td>
+                    )}
 
                     <td>
-                      {editingId === item.id ? (
-                        <input
-                          value={editData.phone}
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              phone: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        item.phone
-                      )}
-                    </td>
-
-                    <td>
-                      {item.created_at
-                        ? new Date(item.created_at).toLocaleString()
-                        : "-"}
-                    </td>
-
-                    <td>
-                      {editingId === item.id ? (
-                        <>
-                          <button onClick={() => handleUpdate(item.id)}>
-                            Save
-                          </button>
-                          <button onClick={() => setEditingId(null)}>
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button onClick={() => startEditing(item)}>
-                            Edit
-                          </button>
-                          <button onClick={() => handleDelete(item.id)}>
-                            Delete
-                          </button>
-                        </>
-                      )}
+                      <button onClick={() => handleDelete(item.id)}>
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -333,11 +302,7 @@ function NakshatraTable({ type = "devotees" }) {
       {showConfirmPopup && (
         <div className="popup-overlay">
           <div className="popup-card">
-            <h3>
-              {isDuplicatePage
-                ? "Delete ALL Duplicate Entries?"
-                : `Delete Entire ${nakshatraName} Table?`}
-            </h3>
+            <h3>Are you sure?</h3>
 
             <div className="popup-actions">
               <button onClick={() => setShowConfirmPopup(false)}>

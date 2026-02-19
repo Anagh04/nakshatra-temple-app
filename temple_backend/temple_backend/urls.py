@@ -7,15 +7,16 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    # ✅ Health check route for Render
+
+    # Health check route (Render uptime)
     path('', lambda request: HttpResponse("Server Running")),
 
     path('admin/', admin.site.urls),
 
-    # 🔥 JWT routes FIRST
+    # JWT Authentication
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    # 🔥 Then include app routes
+    # App Routes
     path('api/', include('devotees.urls')),
 ]

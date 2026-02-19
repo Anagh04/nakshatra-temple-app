@@ -13,12 +13,16 @@ from django.db import IntegrityError
 
 import pandas as pd
 
-from .models import Devotee
-from .serializers import DevoteeSerializer
+from .models import Devotee, DuplicateEntry, InvalidEntry
+from .serializers import (
+    DevoteeSerializer,
+    DuplicateEntrySerializer,
+    InvalidEntrySerializer,
+)
 
 
 # ============================================================
-# DEVOTEE VIEWSET (JWT PROTECTED CRUD)
+# DEVOTEE VIEWSET
 # ============================================================
 
 class DevoteeViewSet(viewsets.ModelViewSet):
@@ -37,7 +41,27 @@ class DevoteeViewSet(viewsets.ModelViewSet):
 
 
 # ============================================================
-# REGISTER API (PUBLIC)
+# DUPLICATE ENTRY VIEWSET
+# ============================================================
+
+class DuplicateEntryViewSet(viewsets.ModelViewSet):
+    queryset = DuplicateEntry.objects.all().order_by("-created_at")
+    serializer_class = DuplicateEntrySerializer
+    permission_classes = [IsAuthenticated]
+
+
+# ============================================================
+# INVALID ENTRY VIEWSET
+# ============================================================
+
+class InvalidEntryViewSet(viewsets.ModelViewSet):
+    queryset = InvalidEntry.objects.all().order_by("-created_at")
+    serializer_class = InvalidEntrySerializer
+    permission_classes = [IsAuthenticated]
+
+
+# ============================================================
+# REGISTER API
 # ============================================================
 
 @api_view(["POST"])
@@ -86,7 +110,7 @@ def register(request):
 
 
 # ============================================================
-# BULK FILE UPLOAD (UPDATED WITH ROW DETAILS)
+# BULK FILE UPLOAD
 # ============================================================
 
 @api_view(["POST"])
@@ -103,9 +127,8 @@ def bulk_upload(request):
         )
 
     try:
-        # ------------------------------
+
         # Read file
-        # ------------------------------
         if file.name.endswith(".csv"):
             df = pd.read_csv(file)
         elif file.name.endswith(".xlsx"):
@@ -116,9 +139,7 @@ def bulk_upload(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ------------------------------
         # Clean column names
-        # ------------------------------
         df.columns = (
             df.columns
             .str.strip()
@@ -126,9 +147,7 @@ def bulk_upload(request):
             .str.replace(" ", "")
         )
 
-        # ------------------------------
-        # SMART COLUMN RENAME
-        # ------------------------------
+        # Rename columns
         column_mapping = {}
 
         for col in df.columns:
@@ -159,12 +178,6 @@ def bulk_upload(request):
         duplicate_count = 0
         invalid_count = 0
 
-        duplicate_rows = []
-        invalid_rows = []
-
-        # ------------------------------
-        # Process rows
-        # ------------------------------
         for _, row in df.iterrows():
 
             name = str(row.get("name", "")).strip().upper()
@@ -172,7 +185,6 @@ def bulk_upload(request):
             phone_raw = row.get("phone")
             raw_nakshatra = str(row.get("nakshatra", "")).strip().lower()
 
-            # Clean phone
             phone = ""
             if pd.notna(phone_raw):
                 try:
@@ -180,31 +192,34 @@ def bulk_upload(request):
                 except:
                     phone = str(phone_raw).strip()
 
+            # Missing fields
             if not name or not phone or not raw_nakshatra or not country_code:
+                InvalidEntry.objects.create(
+                    name=name,
+                    country_code=country_code,
+                    phone=phone,
+                    nakshatra=raw_nakshatra.upper(),
+                    reason="Missing required fields",
+                )
                 invalid_count += 1
-                invalid_rows.append({
-                    "name": name,
-                    "country_code": country_code,
-                    "phone": phone,
-                    "nakshatra": raw_nakshatra.upper(),
-                    "reason": "Missing required fields"
-                })
                 continue
 
             raw_nakshatra = raw_nakshatra.replace("shw", "sw")
             formatted_nakshatra = raw_nakshatra.upper()
 
+            # Invalid nakshatra
             if formatted_nakshatra not in valid_nakshatras:
+                InvalidEntry.objects.create(
+                    name=name,
+                    country_code=country_code,
+                    phone=phone,
+                    nakshatra=formatted_nakshatra,
+                    reason="Invalid Nakshatra",
+                )
                 invalid_count += 1
-                invalid_rows.append({
-                    "name": name,
-                    "country_code": country_code,
-                    "phone": phone,
-                    "nakshatra": formatted_nakshatra,
-                    "reason": "Invalid Nakshatra"
-                })
                 continue
 
+            # Duplicate check
             exists = Devotee.objects.filter(
                 name=name,
                 phone=phone,
@@ -213,14 +228,13 @@ def bulk_upload(request):
             ).exists()
 
             if exists:
+                DuplicateEntry.objects.create(
+                    name=name,
+                    country_code=country_code,
+                    phone=phone,
+                    nakshatra=formatted_nakshatra,
+                )
                 duplicate_count += 1
-                duplicate_rows.append({
-                    "name": name,
-                    "country_code": country_code,
-                    "phone": phone,
-                    "nakshatra": formatted_nakshatra,
-                    "reason": "Duplicate Entry"
-                })
                 continue
 
             Devotee.objects.create(
@@ -238,8 +252,6 @@ def bulk_upload(request):
                 "created": created_count,
                 "duplicates": duplicate_count,
                 "invalid": invalid_count,
-                "duplicate_rows": duplicate_rows,
-                "invalid_rows": invalid_rows,
             },
             status=status.HTTP_200_OK,
         )

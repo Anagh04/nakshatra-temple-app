@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Devotee
+from .models import Devotee, DuplicateEntry, InvalidEntry
 
 
 # ============================================================
@@ -16,9 +16,9 @@ def normalize_string(value):
 
     value = value.strip().lower()
     value = value.replace(" ", "")
-    value = value.replace("sh", "s")     # Ash → As
-    value = value.replace("oo", "u")     # Pooram variations safety
-    value = value.replace("aa", "a")     # Long vowel safety
+    value = value.replace("sh", "s")
+    value = value.replace("oo", "u")
+    value = value.replace("aa", "a")
     return value
 
 
@@ -54,9 +54,9 @@ class DevoteeSerializer(serializers.ModelSerializer):
             }
         }
 
-    # ============================================================
+    # ------------------------------
     # FIELD VALIDATIONS
-    # ============================================================
+    # ------------------------------
 
     def validate_name(self, value):
         value = value.strip()
@@ -64,7 +64,6 @@ class DevoteeSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("Name cannot be empty.")
 
-        # 🔥 FORCE UPPERCASE NAME
         return value.upper()
 
     def validate_phone(self, value):
@@ -92,9 +91,9 @@ class DevoteeSerializer(serializers.ModelSerializer):
 
         return value
 
-    # ============================================================
-    # 🔥 SMART NAKSHATRA MATCHING + FORCE UPPERCASE
-    # ============================================================
+    # ------------------------------
+    # SMART NAKSHATRA MATCHING
+    # ------------------------------
 
     def validate_nakshatra(self, value):
 
@@ -112,12 +111,11 @@ class DevoteeSerializer(serializers.ModelSerializer):
                 "Invalid Nakshatra selected."
             )
 
-        # 🔥 FORCE UPPERCASE NAKSHATRA
         return normalized_map[input_normalized]
 
-    # ============================================================
+    # ------------------------------
     # DUPLICATE PROTECTION
-    # ============================================================
+    # ------------------------------
 
     def validate(self, data):
 
@@ -142,3 +140,23 @@ class DevoteeSerializer(serializers.ModelSerializer):
             })
 
         return data
+
+
+# ============================================================
+# DUPLICATE ENTRY SERIALIZER
+# ============================================================
+
+class DuplicateEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DuplicateEntry
+        fields = "__all__"
+
+
+# ============================================================
+# INVALID ENTRY SERIALIZER
+# ============================================================
+
+class InvalidEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InvalidEntry
+        fields = "__all__"

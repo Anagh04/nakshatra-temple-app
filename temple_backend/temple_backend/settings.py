@@ -19,10 +19,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
-    "nakshatra-temple-app.onrender.com",
+    "temple-backend.onrender.com",
     "localhost",
     "127.0.0.1",
 ]
+
 
 # ==================================================
 # APPLICATIONS
@@ -80,8 +81,10 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "http://localhost:5174",   # ADD THIS
+    "http://localhost:5174",
+    "https://nakshatra-temple-app.vercel.app",
 ]
+
 
 CORS_ALLOW_CREDENTIALS = True
 

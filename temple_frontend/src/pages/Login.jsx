@@ -46,7 +46,7 @@ function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2 className="login-title">Nakshatra Temple</h2>
+        <h2 className="login-title">Varahi Nakshatra Pooja</h2>
         <p className="login-subtitle">Sign in to continue</p>
 
         <form onSubmit={handleLogin}>

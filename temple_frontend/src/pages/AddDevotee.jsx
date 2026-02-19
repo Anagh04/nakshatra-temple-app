@@ -39,7 +39,6 @@ function AddDevotee() {
   }, [success]);
 
   // ================= INPUT HANDLING =================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -63,7 +62,6 @@ function AddDevotee() {
   };
 
   // ================= SINGLE ENTRY SUBMIT =================
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -80,7 +78,7 @@ function AddDevotee() {
       const response = await API.post("devotees/", {
         ...formData,
         name: formData.name.toUpperCase(),
-        nakshatra: formData.nakshatra.toUpperCase(),  // 🔥 FIXED
+        nakshatra: formData.nakshatra.toUpperCase(),
       });
 
       setSuccess(response.data.message || "Devotee added successfully!");
@@ -115,7 +113,6 @@ function AddDevotee() {
   };
 
   // ================= BULK UPLOAD =================
-
   const handleBulkUpload = async () => {
     setError("");
     setSuccess("");
@@ -133,12 +130,13 @@ function AddDevotee() {
     try {
       const response = await API.post("bulk-upload/", data);
 
-      setSuccess(
-        `Upload Completed Successfully!
-Created: ${response.data.created}
-Duplicates: ${response.data.duplicates}
-Invalid Rows: ${response.data.invalid}`
-      );
+      // 🔥 Redirect to Nakshatras page with row data
+      navigate("/nakshatras", {
+        state: {
+          duplicateRows: response.data.duplicate_rows || [],
+          invalidRows: response.data.invalid_rows || [],
+        },
+      });
 
       setSelectedFile(null);
 
@@ -154,7 +152,6 @@ Invalid Rows: ${response.data.invalid}`
   };
 
   // ================= LOGOUT =================
-
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");

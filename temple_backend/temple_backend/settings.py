@@ -75,12 +75,14 @@ SIMPLE_JWT = {
 }
 
 # ==================================================
-# CORS CONFIG (🔥 FIXED)
+# ✅ CORS CONFIG (FINAL WORKING VERSION)
 # ==================================================
 
-# Allow all origins (safe for JWT-based API)
+# Since you're using JWT (Authorization header),
+# you DO NOT need credentials.
+
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = False
 
 # ==================================================
 # URL CONFIG

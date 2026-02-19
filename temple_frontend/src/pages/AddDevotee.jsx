@@ -16,7 +16,6 @@ function AddDevotee() {
   });
 
   const [selectedFile, setSelectedFile] = useState(null);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,10 +47,14 @@ function AddDevotee() {
     }));
   };
 
+  // 🔥 FIXED COUNTRY CODE (NO + SYMBOL)
   const handlePhoneChange = (value, country) => {
     const dialCode = country?.dialCode || "";
-    const countryCode = dialCode ? "+" + dialCode : "";
-    const phoneNumber = dialCode ? value.slice(dialCode.length) : value;
+
+    const countryCode = dialCode; // ✅ Only digits
+    const phoneNumber = dialCode
+      ? value.slice(dialCode.length)
+      : value;
 
     setFormData((prev) => ({
       ...prev,

@@ -23,6 +23,7 @@
     rgba(10, 5, 40, 0.85),
     rgba(40, 0, 70, 0.85)
   );
+  pointer-events: none; /* ✅ prevents blocking clicks */
 }
 
 .dashboard-container > * {
@@ -59,7 +60,7 @@
   cursor: pointer;
   color: white;
   background: linear-gradient(135deg, #7c3aed, #2563eb);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .header-btn:hover {
@@ -119,7 +120,7 @@ select {
   background: rgba(0, 0, 0, 0.6);
   color: white;
   font-size: 14px;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 input:focus,
@@ -129,7 +130,10 @@ select:focus {
   box-shadow: 0 0 10px #7c3aed;
 }
 
-/* Phone input main box */
+/* ===============================
+   PHONE INPUT CUSTOMIZATION
+================================= */
+
 .react-tel-input .form-control {
   width: 100% !important;
   background: rgba(0, 0, 0, 0.6) !important;
@@ -138,42 +142,35 @@ select:focus {
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
 
-/* ===============================
-   REMOVE WHITE HOVER IN COUNTRY LIST
-================================= */
-
+/* Country dropdown */
 .react-tel-input .country-list {
   background: rgba(20, 10, 50, 0.95) !important;
   color: white !important;
   border-radius: 12px !important;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6) !important;
   backdrop-filter: blur(12px);
+  z-index: 9999 !important; /* ✅ prevents overlap issues */
 }
 
-/* Remove white hover */
 .react-tel-input .country-list .country:hover {
   background: rgba(124, 58, 237, 0.3) !important;
   color: #fff !important;
 }
 
-/* Remove white selected highlight */
 .react-tel-input .country-list .country.highlight {
   background: linear-gradient(90deg, #7c3aed, #3b82f6) !important;
   color: #fff !important;
 }
 
-/* Remove default white active state */
 .react-tel-input .country-list .country.active {
   background: rgba(124, 58, 237, 0.35) !important;
   color: #fff !important;
 }
 
-/* Remove white background completely */
 .react-tel-input .country-list li {
   background: transparent !important;
 }
 
-/* Fix search box */
 .react-tel-input .country-list .search-box {
   background: rgba(0, 0, 0, 0.7) !important;
   color: white !important;
@@ -198,7 +195,7 @@ select:focus {
   font-weight: 500;
   font-size: 15px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .form-card button:hover {
@@ -239,6 +236,23 @@ button:disabled {
   background: rgba(34, 197, 94, 0.15);
   border: 1px solid #22c55e;
   color: #bbf7d0;
+}
+
+/* ===============================
+   SCROLLBAR (Optional Polish)
+================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7c3aed, #3b82f6);
+  border-radius: 10px;
 }
 
 /* ===============================

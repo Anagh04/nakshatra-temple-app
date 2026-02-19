@@ -6,8 +6,8 @@ import "./NakshatraTable.css";
 function NakshatraTable() {
   const { name } = useParams();
 
-  // 🔥 Always use uppercase nakshatra
-  const nakshatraName = name.toUpperCase();
+  // ✅ Safe uppercase handling
+  const nakshatraName = name ? name.toUpperCase() : "";
 
   const [devotees, setDevotees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,8 +21,10 @@ function NakshatraTable() {
     phone: "",
   });
 
-  // ================= FETCH =================
+  // ================= FETCH DEVOTEES =================
   const fetchDevotees = async () => {
+    if (!nakshatraName) return;
+
     try {
       const response = await API.get(
         `devotees/?nakshatra=${encodeURIComponent(nakshatraName)}`
@@ -86,7 +88,7 @@ function NakshatraTable() {
     }
   };
 
-  // ================= DELETE ENTIRE NAKSHATRA =================
+  // ================= DELETE ENTIRE TABLE =================
   const handleDeleteNakshatra = async () => {
     setLoading(true);
 
@@ -119,7 +121,7 @@ function NakshatraTable() {
         </div>
       </div>
 
-      {/* 🔍 SEARCH INPUT */}
+      {/* 🔍 SEARCH */}
       <div className="search-box">
         <input
           type="text"
@@ -197,19 +199,39 @@ function NakshatraTable() {
                   </td>
 
                   <td className="action-buttons">
-                    <button
-                      className="edit-btn"
-                      onClick={() => startEditing(devotee)}
-                    >
-                      Edit
-                    </button>
+                    {editingId === devotee.id ? (
+                      <>
+                        <button
+                          className="edit-btn"
+                          onClick={() => handleUpdate(devotee.id)}
+                        >
+                          Save
+                        </button>
 
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDelete(devotee.id)}
-                    >
-                      Delete
-                    </button>
+                        <button
+                          className="cancel-btn"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="edit-btn"
+                          onClick={() => startEditing(devotee)}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDelete(devotee.id)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))
@@ -218,6 +240,7 @@ function NakshatraTable() {
         </table>
       </div>
 
+      {/* 🔥 CONFIRM DELETE POPUP */}
       {showConfirmPopup && (
         <div className="popup-overlay">
           <div className="popup-card">
@@ -243,6 +266,7 @@ function NakshatraTable() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

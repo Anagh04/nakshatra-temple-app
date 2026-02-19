@@ -16,6 +16,8 @@ function NakshatraTable() {
   const [editingId, setEditingId] = useState(null);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [editData, setEditData] = useState({
     name: "",
@@ -27,13 +29,19 @@ function NakshatraTable() {
   const fetchDevotees = async () => {
     if (!nakshatraName) return;
 
+    setFetchLoading(true);
+    setError("");
+
     try {
       const response = await API.get(
         `devotees/?nakshatra=${encodeURIComponent(nakshatraName)}`
       );
       setDevotees(response.data);
-    } catch (error) {
-      console.error(error.response?.data || error.message);
+    } catch (err) {
+      setError("Failed to fetch devotees.");
+      console.error(err.response?.data || err.message);
+    } finally {
+      setFetchLoading(false);
     }
   };
 
@@ -42,10 +50,9 @@ function NakshatraTable() {
   }, [nakshatraName]);
 
   // ================= FILTER =================
-  const filteredDevotees = devotees.filter(
-    (devotee) =>
-      devotee.name.includes(searchTerm.toUpperCase()) ||
-      devotee.phone.includes(searchTerm)
+  const filteredDevotees = devotees.filter((devotee) =>
+    devotee.name.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    devotee.phone.includes(searchTerm)
   );
 
   // ================= PDF DOWNLOAD =================
@@ -60,17 +67,15 @@ function NakshatraTable() {
       "Date & Time",
     ];
 
-    const tableRows = [];
-
-    filteredDevotees.forEach((devotee, index) => {
-      tableRows.push([
-        index + 1,
-        devotee.name,
-        devotee.country_code,
-        devotee.phone,
-        new Date(devotee.created_at).toLocaleString(),
-      ]);
-    });
+    const tableRows = filteredDevotees.map((devotee, index) => [
+      index + 1,
+      devotee.name,
+      devotee.country_code,
+      devotee.phone,
+      devotee.created_at
+        ? new Date(devotee.created_at).toLocaleString()
+        : "-",
+    ]);
 
     autoTable(doc, {
       head: [tableColumn],
@@ -87,7 +92,9 @@ function NakshatraTable() {
       Name: devotee.name,
       CountryCode: devotee.country_code,
       Phone: devotee.phone,
-      DateTime: new Date(devotee.created_at).toLocaleString(),
+      DateTime: devotee.created_at
+        ? new Date(devotee.created_at).toLocaleString()
+        : "-",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(csvData);
@@ -113,8 +120,8 @@ function NakshatraTable() {
     try {
       await API.delete(`devotees/${id}/`);
       fetchDevotees();
-    } catch (error) {
-      console.error(error.response?.data || error.message);
+    } catch (err) {
+      console.error(err.response?.data || err.message);
     }
   };
 
@@ -144,8 +151,8 @@ function NakshatraTable() {
 
       setEditingId(null);
       fetchDevotees();
-    } catch (error) {
-      console.error(error.response?.data || error.message);
+    } catch (err) {
+      console.error(err.response?.data || err.message);
     }
   };
 
@@ -159,8 +166,8 @@ function NakshatraTable() {
       );
       setShowConfirmPopup(false);
       fetchDevotees();
-    } catch (error) {
-      console.error(error.response?.data || error.message);
+    } catch (err) {
+      console.error(err.response?.data || err.message);
     } finally {
       setLoading(false);
     }
@@ -168,6 +175,7 @@ function NakshatraTable() {
 
   return (
     <div className="table-container">
+
       <div className="table-header">
         <div className="title-section">
           <h2>{nakshatraName} NAKSHATRA</h2>
@@ -201,113 +209,121 @@ function NakshatraTable() {
         />
       </div>
 
+      {error && <div className="error-box">{error}</div>}
+
       <p className="total-count">
         Showing {filteredDevotees.length} of {devotees.length} devotees
       </p>
 
       <div className="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Name</th>
-              <th>Country Code</th>
-              <th>Phone</th>
-              <th>Date & Time</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredDevotees.length === 0 ? (
+        {fetchLoading ? (
+          <div className="no-data">Loading devotees...</div>
+        ) : (
+          <table>
+            <thead>
               <tr>
-                <td colSpan="6" className="no-data">
-                  No devotees found
-                </td>
+                <th>No</th>
+                <th>Name</th>
+                <th>Country Code</th>
+                <th>Phone</th>
+                <th>Date & Time</th>
+                <th>Action</th>
               </tr>
-            ) : (
-              filteredDevotees.map((devotee, index) => (
-                <tr key={devotee.id}>
-                  <td>{index + 1}</td>
+            </thead>
 
-                  <td>
-                    {editingId === devotee.id ? (
-                      <input
-                        value={editData.name}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            name: e.target.value.toUpperCase(),
-                          })
-                        }
-                      />
-                    ) : (
-                      devotee.name
-                    )}
-                  </td>
-
-                  <td>{devotee.country_code}</td>
-
-                  <td>
-                    {editingId === devotee.id ? (
-                      <input
-                        value={editData.phone}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            phone: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      devotee.phone
-                    )}
-                  </td>
-
-                  <td>
-                    {new Date(devotee.created_at).toLocaleString()}
-                  </td>
-
-                  <td className="action-buttons">
-                    {editingId === devotee.id ? (
-                      <>
-                        <button
-                          className="edit-btn"
-                          onClick={() => handleUpdate(devotee.id)}
-                        >
-                          Save
-                        </button>
-
-                        <button
-                          className="cancel-btn"
-                          onClick={() => setEditingId(null)}
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="edit-btn"
-                          onClick={() => startEditing(devotee)}
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          className="delete-btn"
-                          onClick={() => handleDelete(devotee.id)}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
+            <tbody>
+              {filteredDevotees.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="no-data">
+                    No devotees found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredDevotees.map((devotee, index) => (
+                  <tr key={devotee.id}>
+                    <td>{index + 1}</td>
+
+                    <td>
+                      {editingId === devotee.id ? (
+                        <input
+                          value={editData.name}
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              name: e.target.value.toUpperCase(),
+                            })
+                          }
+                        />
+                      ) : (
+                        devotee.name
+                      )}
+                    </td>
+
+                    <td>{devotee.country_code}</td>
+
+                    <td>
+                      {editingId === devotee.id ? (
+                        <input
+                          value={editData.phone}
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              phone: e.target.value,
+                            })
+                          }
+                        />
+                      ) : (
+                        devotee.phone
+                      )}
+                    </td>
+
+                    <td>
+                      {devotee.created_at
+                        ? new Date(devotee.created_at).toLocaleString()
+                        : "-"}
+                    </td>
+
+                    <td className="action-buttons">
+                      {editingId === devotee.id ? (
+                        <>
+                          <button
+                            className="edit-btn"
+                            onClick={() => handleUpdate(devotee.id)}
+                          >
+                            Save
+                          </button>
+
+                          <button
+                            className="cancel-btn"
+                            onClick={() => setEditingId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className="edit-btn"
+                            onClick={() => startEditing(devotee)}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDelete(devotee.id)}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* DELETE POPUP */}
@@ -336,6 +352,7 @@ function NakshatraTable() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

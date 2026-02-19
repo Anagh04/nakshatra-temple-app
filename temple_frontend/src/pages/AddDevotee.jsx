@@ -38,30 +38,31 @@ function AddDevotee() {
     }
   }, [success]);
 
-  // ================= SINGLE ENTRY =================
+  // ================= INPUT HANDLING =================
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: name === "name" ? value.toUpperCase() : value,
     }));
   };
 
-  // 🔥 FIXED COUNTRY CODE (NO + SYMBOL)
   const handlePhoneChange = (value, country) => {
     const dialCode = country?.dialCode || "";
-
-    const countryCode = dialCode; // ✅ Only digits
     const phoneNumber = dialCode
       ? value.slice(dialCode.length)
       : value;
 
     setFormData((prev) => ({
       ...prev,
-      country_code: countryCode,
+      country_code: dialCode,
       phone: phoneNumber,
     }));
   };
+
+  // ================= SINGLE ENTRY SUBMIT =================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,7 +77,11 @@ function AddDevotee() {
     setLoading(true);
 
     try {
-      const response = await API.post("devotees/", formData);
+      const response = await API.post("devotees/", {
+        ...formData,
+        name: formData.name.toUpperCase(),
+        nakshatra: formData.nakshatra.toUpperCase(),  // 🔥 FIXED
+      });
 
       setSuccess(response.data.message || "Devotee added successfully!");
 
@@ -215,7 +220,7 @@ Invalid Rows: ${response.data.invalid}`
             >
               <option value="">Select Nakshatra</option>
               {nakshatras.map((n, index) => (
-                <option key={index} value={n}>
+                <option key={index} value={n.toUpperCase()}>
                   {n}
                 </option>
               ))}

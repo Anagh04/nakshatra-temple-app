@@ -5,7 +5,7 @@
 .nakshatra-container {
   min-height: 100vh;
   padding: 60px 40px;
-  background: 
+  background:
     linear-gradient(rgba(10, 5, 30, 0.85), rgba(10, 5, 30, 0.9)),
     url("../assets/zodiac-bg.jpeg") center/cover no-repeat fixed;
   color: white;
@@ -15,7 +15,6 @@
   animation: fadeIn 0.6s ease-out;
 }
 
-/* Smooth page fade */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -70,7 +69,7 @@
   overflow: hidden;
 }
 
-/* Neon glow border */
+/* Neon border */
 .nakshatra-card::before {
   content: "";
   position: absolute;
@@ -78,7 +77,7 @@
   border-radius: 18px;
   padding: 1px;
   background: linear-gradient(45deg, #7c3aed, #3b82f6);
-  -webkit-mask: 
+  -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -87,7 +86,6 @@
   transition: 0.3s;
 }
 
-/* Hover Effects */
 .nakshatra-card:hover {
   transform: translateY(-8px) scale(1.03);
   box-shadow: 0 15px 35px rgba(124, 58, 237, 0.4);
@@ -98,13 +96,54 @@
   opacity: 1;
 }
 
-/* Click animation */
 .nakshatra-card:active {
   transform: scale(0.96);
 }
 
 /* =========================================
-   Responsive Improvements
+   🔴 Special Cards
+========================================= */
+
+.special-card {
+  border: 1px solid rgba(255, 80, 80, 0.6);
+}
+
+.alert-card {
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
+  animation: alertPulse 1.8s infinite;
+}
+
+@keyframes alertPulse {
+  0% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.9); }
+  100% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.4); }
+}
+
+/* =========================================
+   Badge Counter
+========================================= */
+
+.card-badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: linear-gradient(45deg, #ff0000, #ff4d4d);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 50px;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+  animation: badgePop 0.4s ease;
+}
+
+@keyframes badgePop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* =========================================
+   Responsive
 ========================================= */
 
 @media (max-width: 768px) {
@@ -120,17 +159,4 @@
     padding: 18px;
     font-size: 14px;
   }
-}
-
-/* =========================================
-   Subtle floating animation
-========================================= */
-
-.nakshatra-card {
-  animation: floatCard 4s ease-in-out infinite alternate;
-}
-
-@keyframes floatCard {
-  from { transform: translateY(0); }
-  to { transform: translateY(-4px); }
 }

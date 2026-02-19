@@ -26,6 +26,7 @@ class DevoteeViewSet(viewsets.ModelViewSet):
     serializer_class = DevoteeSerializer
     permission_classes = [IsAuthenticated]
 
+    # 🔍 Filter by nakshatra (always uppercase)
     def get_queryset(self):
         queryset = super().get_queryset()
         nakshatra = self.request.query_params.get("nakshatra")
@@ -88,6 +89,7 @@ def register(request):
 # ============================================================
 # BULK FILE UPLOAD (CSV + XLSX)
 # Requires: name, countrycode, phone, nakshatra
+# Smart column detection included
 # ============================================================
 
 @api_view(["POST"])
@@ -126,6 +128,23 @@ def bulk_upload(request):
             .str.lower()
             .str.replace(" ", "")
         )
+
+        # ------------------------------
+        # SMART COLUMN RENAME
+        # ------------------------------
+        column_mapping = {}
+
+        for col in df.columns:
+            if col in ["name"]:
+                column_mapping[col] = "name"
+            elif col in ["countrycode", "country_code"]:
+                column_mapping[col] = "countrycode"
+            elif col in ["phone", "phoneno", "phonenumber"]:
+                column_mapping[col] = "phone"
+            elif col in ["nakshatra"]:
+                column_mapping[col] = "nakshatra"
+
+        df = df.rename(columns=column_mapping)
 
         # ------------------------------
         # Required columns check
@@ -168,7 +187,7 @@ def bulk_upload(request):
                 invalid_count += 1
                 continue
 
-            # Normalize spelling variation
+            # 🔥 Normalize spelling variation
             raw_nakshatra = raw_nakshatra.replace("shw", "sw")
             formatted_nakshatra = raw_nakshatra.upper()
 

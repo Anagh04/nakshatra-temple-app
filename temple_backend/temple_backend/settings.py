@@ -25,7 +25,6 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
 
-
 # ==================================================
 # APPLICATIONS
 # ==================================================
@@ -80,7 +79,7 @@ SIMPLE_JWT = {
 }
 
 # ==================================================
-# CORS CONFIG (IMPORTANT FIX)
+# CORS CONFIG
 # ==================================================
 
 CORS_ALLOWED_ORIGINS = [
@@ -90,16 +89,30 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = False
 
 # ==================================================
-# DATABASE (Render PostgreSQL)
+# DATABASE CONFIGURATION
 # ==================================================
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True,
-    )
-}
+if os.environ.get("DATABASE_URL"):
+    # 🔥 Production (Render PostgreSQL)
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=os.environ.get("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
+    # 🔥 Local Development (XAMPP MySQL)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": "temple_db",   # Create this in phpMyAdmin
+            "USER": "root",
+            "PASSWORD": "",        # XAMPP default
+            "HOST": "127.0.0.1",
+            "PORT": "3306",
+        }
+    }
 
 # ==================================================
 # TEMPLATES
@@ -131,6 +144,10 @@ WSGI_APPLICATION = "temple_backend.wsgi.application"
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# ==================================================
+# DEFAULT SETTINGS
+# ==================================================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

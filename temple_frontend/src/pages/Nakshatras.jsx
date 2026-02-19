@@ -5,13 +5,13 @@ function Nakshatras() {
   const navigate = useNavigate();
 
   const nakshatras = [
-    "Aswathy","Bharani","Karthika","Rohini","Makayiram","Thiruvathira",
-    "Punartham","Pooyam","Ayilyam","Makam","Pooram",
-    "Uthram","Atham","Chithria","Chothi","Vishakham",
-    "Anizham","Thrikketta","Moolam","Pooradam",
-    "Uthradam","Thiruvonam","Avittam",
-    "Chathayam","Pooruruttathi",
-    "Uthruttathi","Revathi"
+    "ASWATHY","BHARANI","KARTHIKA","ROHINI","MAKAYIRAM","THIRUVATHIRA",
+    "PUNARTHAM","POOYAM","AYILYAM","MAKAM","POORAM",
+    "UTHRAM","ATHAM","CHITHRIA","CHOTHI","VISHAKHAM",
+    "ANIZHAM","THRIKKETTA","MOOLAM","POORADAM",
+    "UTHRADAM","THIRUVONAM","AVITTAM",
+    "CHATHAYAM","POORURUTTATHI",
+    "UTHRUTTATHI","REVATHI"
   ];
 
   return (
@@ -26,7 +26,7 @@ function Nakshatras() {
           <div
             key={index}
             className="nakshatra-card"
-            onClick={() => navigate(`/nakshatras/${n}`)}
+            onClick={() => navigate(`/nakshatras/${encodeURIComponent(n)}`)}
           >
             {n}
           </div>

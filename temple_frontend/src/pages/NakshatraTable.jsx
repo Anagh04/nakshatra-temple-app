@@ -1,16 +1,16 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
 import API from "../services/api";
 import "./NakshatraTable.css";
 
 function NakshatraTable() {
   const { name } = useParams();
 
+  // 🔥 Always use uppercase nakshatra
+  const nakshatraName = name.toUpperCase();
+
   const [devotees, setDevotees] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,16 +24,24 @@ function NakshatraTable() {
   // ================= FETCH =================
   const fetchDevotees = async () => {
     try {
-      const response = await API.get(`devotees/?nakshatra=${name}`);
+      const response = await API.get(
+        `devotees/?nakshatra=${encodeURIComponent(nakshatraName)}`
+      );
       setDevotees(response.data);
     } catch (error) {
-      console.error("Error fetching data");
+      console.error(error.response?.data || error.message);
     }
   };
 
   useEffect(() => {
     fetchDevotees();
-  }, [name]);
+  }, [nakshatraName]);
+
+  // ================= SEARCH FILTER =================
+  const filteredDevotees = devotees.filter((devotee) =>
+    devotee.name.includes(searchTerm.toUpperCase()) ||
+    devotee.phone.includes(searchTerm)
+  );
 
   // ================= DELETE SINGLE =================
   const handleDelete = async (id) => {
@@ -43,7 +51,7 @@ function NakshatraTable() {
       await API.delete(`devotees/${id}/`);
       fetchDevotees();
     } catch (error) {
-      console.error("Error deleting");
+      console.error(error.response?.data || error.message);
     }
   };
 
@@ -59,116 +67,48 @@ function NakshatraTable() {
 
   // ================= UPDATE =================
   const handleUpdate = async (id) => {
+    if (!editData.name || !editData.phone) {
+      alert("Name and Phone cannot be empty");
+      return;
+    }
+
     try {
       await API.put(`devotees/${id}/`, {
         ...editData,
-        nakshatra: name,
+        name: editData.name.toUpperCase(),
+        nakshatra: nakshatraName,
       });
 
       setEditingId(null);
       fetchDevotees();
     } catch (error) {
-      console.error("Error updating devotee");
+      console.error(error.response?.data || error.message);
     }
   };
 
   // ================= DELETE ENTIRE NAKSHATRA =================
   const handleDeleteNakshatra = async () => {
     setLoading(true);
+
     try {
-      await API.delete(`delete-nakshatra/${name}/`);
+      await API.delete(
+        `delete-nakshatra/${encodeURIComponent(nakshatraName)}/`
+      );
       setShowConfirmPopup(false);
       fetchDevotees();
     } catch (error) {
-      console.error("Error deleting nakshatra data");
+      console.error(error.response?.data || error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ================= PDF DOWNLOAD =================
-  const downloadPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`${name} Nakshatra Devotee List`, 14, 15);
-
-    autoTable(doc, {
-      head: [["No", "Name", "Country Code", "Phone", "Date & Time"]],
-      body: devotees.map((d, i) => [
-        i + 1,
-        d.name,
-        d.country_code,
-        d.phone,
-        new Date(d.created_at).toLocaleString(),
-      ]),
-      startY: 25,
-    });
-
-    doc.save(`${name}_Nakshatra_List.pdf`);
-  };
-
-  // ================= EXCEL DOWNLOAD =================
-  const downloadExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Devotees");
-
-    worksheet.columns = [
-      { header: "No", key: "no", width: 10 },
-      { header: "Name", key: "name", width: 25 },
-      { header: "Country Code", key: "code", width: 15 },
-      { header: "Phone", key: "phone", width: 20 },
-      { header: "Date & Time", key: "date", width: 25 },
-    ];
-
-    devotees.forEach((d, i) => {
-      worksheet.addRow({
-        no: i + 1,
-        name: d.name,
-        code: d.country_code,
-        phone: d.phone,
-        date: new Date(d.created_at).toLocaleString(),
-      });
-    });
-
-    worksheet.getRow(1).font = { bold: true };
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    saveAs(blob, `${name}_Nakshatra_List.xlsx`);
-  };
-
-  // ================= CSV DOWNLOAD =================
-  const downloadCSV = () => {
-    const headers = ["No", "Name", "Country Code", "Phone", "Date & Time"];
-
-    const rows = devotees.map((d, i) => [
-      i + 1,
-      d.name,
-      d.country_code,
-      d.phone,
-      new Date(d.created_at).toLocaleString(),
-    ]);
-
-    const csvContent = [headers, ...rows]
-      .map((row) => row.join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    saveAs(blob, `${name}_Nakshatra_List.csv`);
-  };
-
   return (
     <div className="table-container">
+
       <div className="table-header">
         <div className="title-section">
-          <h2>{name} Nakshatra</h2>
+          <h2>{nakshatraName} NAKSHATRA</h2>
 
           <button
             className="delete-nakshatra-btn"
@@ -177,22 +117,20 @@ function NakshatraTable() {
             Delete Table
           </button>
         </div>
+      </div>
 
-        <div className="header-actions">
-          <button onClick={downloadPDF} className="download-btn">
-            PDF
-          </button>
-          <button onClick={downloadExcel} className="download-btn">
-            Excel
-          </button>
-          <button onClick={downloadCSV} className="download-btn">
-            CSV
-          </button>
-        </div>
+      {/* 🔍 SEARCH INPUT */}
+      <div className="search-box">
+        <input
+          type="text"
+          placeholder="Search by name or phone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       <p className="total-count">
-        Total Devotees: <strong>{devotees.length}</strong>
+        Showing {filteredDevotees.length} of {devotees.length} devotees
       </p>
 
       <div className="table-wrapper">
@@ -209,14 +147,14 @@ function NakshatraTable() {
           </thead>
 
           <tbody>
-            {devotees.length === 0 ? (
+            {filteredDevotees.length === 0 ? (
               <tr>
                 <td colSpan="6" className="no-data">
                   No devotees found
                 </td>
               </tr>
             ) : (
-              devotees.map((devotee, index) => (
+              filteredDevotees.map((devotee, index) => (
                 <tr key={devotee.id}>
                   <td>{index + 1}</td>
 
@@ -225,7 +163,10 @@ function NakshatraTable() {
                       <input
                         value={editData.name}
                         onChange={(e) =>
-                          setEditData({ ...editData, name: e.target.value })
+                          setEditData({
+                            ...editData,
+                            name: e.target.value.toUpperCase(),
+                          })
                         }
                       />
                     ) : (
@@ -233,28 +174,17 @@ function NakshatraTable() {
                     )}
                   </td>
 
-                  <td>
-                    {editingId === devotee.id ? (
-                      <input
-                        value={editData.country_code}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            country_code: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      devotee.country_code
-                    )}
-                  </td>
+                  <td>{devotee.country_code}</td>
 
                   <td>
                     {editingId === devotee.id ? (
                       <input
                         value={editData.phone}
                         onChange={(e) =>
-                          setEditData({ ...editData, phone: e.target.value })
+                          setEditData({
+                            ...editData,
+                            phone: e.target.value,
+                          })
                         }
                       />
                     ) : (
@@ -267,39 +197,19 @@ function NakshatraTable() {
                   </td>
 
                   <td className="action-buttons">
-                    {editingId === devotee.id ? (
-                      <>
-                        <button
-                          className="edit-btn"
-                          onClick={() => handleUpdate(devotee.id)}
-                        >
-                          Save
-                        </button>
+                    <button
+                      className="edit-btn"
+                      onClick={() => startEditing(devotee)}
+                    >
+                      Edit
+                    </button>
 
-                        <button
-                          className="cancel-btn"
-                          onClick={() => setEditingId(null)}
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="edit-btn"
-                          onClick={() => startEditing(devotee)}
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          className="delete-btn"
-                          onClick={() => handleDelete(devotee.id)}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
+                    <button
+                      className="delete-btn"
+                      onClick={() => handleDelete(devotee.id)}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))
@@ -311,7 +221,7 @@ function NakshatraTable() {
       {showConfirmPopup && (
         <div className="popup-overlay">
           <div className="popup-card">
-            <h3>Delete Entire {name} Table?</h3>
+            <h3>Delete Entire {nakshatraName} Table?</h3>
             <p>This will remove ALL devotees from this Nakshatra.</p>
 
             <div className="popup-actions">

@@ -16,87 +16,46 @@
 }
 
 /* ========================================
-   HEADER SECTION
+   HEADER
 ======================================== */
 
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center; /* improved alignment */
-  margin-bottom: 25px;
-}
-
-.table-header h2 {
+.table-container h2 {
   font-size: 26px;
   font-weight: 600;
   letter-spacing: 1px;
+  margin-bottom: 20px;
   background: linear-gradient(90deg, #8e2de2, #4a00e0);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: flex-end;
-}
-
 /* ========================================
-   BUTTONS
+   SEARCH BOX
 ======================================== */
 
-.download-btn,
-.edit-btn,
-.delete-btn,
-.save-btn,
-.cancel-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
+.search-box {
+  margin-bottom: 20px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(142, 45, 226, 0.4);
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
   font-size: 14px;
-  transition: all 0.25s ease;
-  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
-/* Gradient Buttons */
-
-.download-btn,
-.edit-btn,
-.save-btn {
-  background: linear-gradient(135deg, #4a00e0, #8e2de2);
-  color: white;
+.search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.download-btn:hover,
-.edit-btn:hover,
-.save-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(142, 45, 226, 0.5);
-}
-
-/* Delete */
-
-.delete-btn {
-  background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  color: white;
-}
-
-.delete-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 75, 43, 0.5);
-}
-
-/* Cancel */
-
-.cancel-btn {
-  background: #555;
-  color: white;
-}
-
-.cancel-btn:hover {
-  background: #777;
+.search-box input:focus {
+  border-color: #8e2de2;
+  box-shadow: 0 0 12px rgba(142, 45, 226, 0.6);
 }
 
 /* ========================================
@@ -104,9 +63,9 @@
 ======================================== */
 
 .total-count {
-  margin-bottom: 20px;
-  font-size: 16px;
-  opacity: 0.9;
+  margin-bottom: 18px;
+  font-size: 15px;
+  opacity: 0.85;
 }
 
 /* ========================================
@@ -116,7 +75,7 @@
 .table-wrapper {
   background: rgba(20, 10, 60, 0.65);
   backdrop-filter: blur(18px);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 20px;
   border: 1px solid rgba(142, 45, 226, 0.3);
   box-shadow: 0 0 25px rgba(142, 45, 226, 0.2);
@@ -135,7 +94,7 @@ table {
 }
 
 thead {
-  background: rgba(142, 45, 226, 0.2);
+  background: rgba(142, 45, 226, 0.25);
 }
 
 thead th {
@@ -147,10 +106,10 @@ thead th {
 tbody td {
   padding: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
-/* Name column left aligned */
+/* Left align name column */
 
 thead th:nth-child(2),
 tbody td:nth-child(2) {
@@ -163,23 +122,12 @@ tbody td:nth-child(2) {
 ======================================== */
 
 tbody tr:hover {
-  background: rgba(142, 45, 226, 0.1);
+  background: rgba(142, 45, 226, 0.12);
   transform: scale(1.01);
 }
 
 /* ========================================
-   ACTION BUTTON CONTAINER
-======================================== */
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ========================================
-   INPUTS (Edit Mode)
+   INPUTS (Edit Mode if reused)
 ======================================== */
 
 tbody input {
@@ -222,8 +170,6 @@ tbody input:focus {
 
   background: rgba(10, 10, 25, 0.75);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
   z-index: 9999;
   animation: fadeIn 0.25s ease-in-out;
 }
@@ -233,15 +179,13 @@ tbody input:focus {
 ======================================== */
 
 .popup-card {
-  position: relative;
   width: 420px;
   max-width: 90%;
   padding: 35px 40px;
   border-radius: 20px;
 
-  background: rgba(20, 15, 60, 0.9);
+  background: rgba(20, 15, 60, 0.95);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 
   border: 1px solid rgba(140, 120, 255, 0.25);
 
@@ -295,14 +239,8 @@ tbody input:focus {
 
 @media (max-width: 768px) {
 
-  .table-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-  .header-actions {
-    flex-wrap: wrap;
+  .table-container {
+    padding: 30px 4%;
   }
 
   table {
@@ -312,5 +250,13 @@ tbody input:focus {
   thead th,
   tbody td {
     padding: 10px;
+  }
+
+  .table-container h2 {
+    font-size: 20px;
+  }
+
+  .search-box input {
+    font-size: 13px;
   }
 }

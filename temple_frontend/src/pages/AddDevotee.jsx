@@ -15,7 +15,6 @@ function AddDevotee() {
     nakshatra: "",
   });
 
-  const [bulkNakshatra, setBulkNakshatra] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
 
   const [error, setError] = useState("");
@@ -35,7 +34,7 @@ function AddDevotee() {
   // ================= AUTO HIDE SUCCESS =================
   useEffect(() => {
     if (success) {
-      const timer = setTimeout(() => setSuccess(""), 3000);
+      const timer = setTimeout(() => setSuccess(""), 4000);
       return () => clearTimeout(timer);
     }
   }, [success]);
@@ -91,22 +90,13 @@ function AddDevotee() {
       if (error.response?.data) {
         const data = error.response.data;
 
-        if (typeof data === "string") {
-          message = data;
-        } 
-        else if (typeof data === "object") {
-
-          if (data.duplicate) {
-            message = data.duplicate;
-          } 
-          else if (data.error) {
-            message = data.error;
-          } 
-          else {
-            const firstKey = Object.keys(data)[0];
-            const value = data[firstKey];
-            message = Array.isArray(value) ? value[0] : value;
-          }
+        if (data.duplicate) message = data.duplicate;
+        else if (data.error) message = data.error;
+        else {
+          const firstKey = Object.keys(data)[0];
+          message = Array.isArray(data[firstKey])
+            ? data[firstKey][0]
+            : data[firstKey];
         }
       }
 
@@ -127,16 +117,10 @@ function AddDevotee() {
       return;
     }
 
-    if (!bulkNakshatra) {
-      setError("Please select Nakshatra for bulk upload");
-      return;
-    }
-
     setLoading(true);
 
     const data = new FormData();
     data.append("file", selectedFile);
-    data.append("nakshatra", bulkNakshatra);
 
     try {
       const response = await API.post("bulk-upload/", data);
@@ -149,7 +133,6 @@ Invalid Rows: ${response.data.invalid}`
       );
 
       setSelectedFile(null);
-      setBulkNakshatra("");
 
     } catch (error) {
       if (error.response?.data?.error) {
@@ -193,7 +176,7 @@ Invalid Rows: ${response.data.invalid}`
 
       {/* SINGLE ENTRY */}
       <div className="form-card">
-        <h3>Single Upload</h3>
+        <h3>Single Entry</h3>
 
         <form onSubmit={handleSubmit}>
 
@@ -245,22 +228,6 @@ Invalid Rows: ${response.data.invalid}`
       {/* BULK ENTRY */}
       <div className="form-card" style={{ marginTop: "30px" }}>
         <h3>Bulk Upload (Excel / CSV)</h3>
-
-        <div className="form-group">
-          <label>Select Nakshatra</label>
-          <select
-            value={bulkNakshatra}
-            onChange={(e) => setBulkNakshatra(e.target.value)}
-            required
-          >
-            <option value="">Select Nakshatra</option>
-            {nakshatras.map((n, index) => (
-              <option key={index} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </div>
 
         <div className="form-group">
           <input

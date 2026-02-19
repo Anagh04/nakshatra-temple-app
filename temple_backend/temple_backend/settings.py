@@ -15,15 +15,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
-# DEBUG automatically False on Render
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
-    "temple-backend.onrender.com",
+    "nakshatra-temple-app.onrender.com",
     "localhost",
     "127.0.0.1",
 ]
-
 
 # ==================================================
 # APPLICATIONS
@@ -48,7 +46,7 @@ INSTALLED_APPS = [
 # ==================================================
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",   # MUST BE FIRST
+    "corsheaders.middleware.CorsMiddleware",  # MUST BE FIRST
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -57,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 # ==================================================
 # REST FRAMEWORK
 # ==================================================
@@ -76,18 +75,12 @@ SIMPLE_JWT = {
 }
 
 # ==================================================
-# CORS CONFIG
+# CORS CONFIG (🔥 FIXED)
 # ==================================================
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "https://nakshatra-temple-app.vercel.app",
-]
-
-
+# Allow all origins (safe for JWT-based API)
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-
 
 # ==================================================
 # URL CONFIG

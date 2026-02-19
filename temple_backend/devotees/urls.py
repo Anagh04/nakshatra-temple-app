@@ -9,40 +9,21 @@ from .views import (
     delete_nakshatra_data,
 )
 
-# ============================================================
-# ROUTER
-# ============================================================
-
 router = DefaultRouter()
 
 # Main Devotee table
 router.register(r'devotees', DevoteeViewSet, basename='devotee')
 
-# 🔥 NEW ROUTES
+# 🔥 Corrected routes
 router.register(r'duplicates', DuplicateEntryViewSet, basename='duplicate')
-router.register(r'invalid', InvalidEntryViewSet, basename='invalid')
-
-# ============================================================
-# URL PATTERNS
-# ============================================================
+router.register(r'invalids', InvalidEntryViewSet, basename='invalid')
 
 urlpatterns = [
 
-    # Register user
-    path(
-        'register/',
-        register,
-        name='register-devotee'
-    ),
+    path('register/', register, name='register-devotee'),
 
-    # Bulk upload
-    path(
-        'bulk-upload/',
-        bulk_upload,
-        name='bulk-upload'
-    ),
+    path('bulk-upload/', bulk_upload, name='bulk-upload'),
 
-    # Delete devotees by nakshatra
     path(
         'delete-nakshatra/<str:nakshatra_name>/',
         delete_nakshatra_data,
@@ -50,5 +31,4 @@ urlpatterns = [
     ),
 ]
 
-# Include router URLs
 urlpatterns += router.urls

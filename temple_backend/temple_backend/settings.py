@@ -92,25 +92,30 @@ CORS_ALLOW_CREDENTIALS = False
 # DATABASE CONFIGURATION
 # ==================================================
 
-if os.environ.get("DATABASE_URL"):
-    # 🔥 Production (Render PostgreSQL)
+# Production (Render PostgreSQL)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
     DATABASES = {
-        "default": dj_database_url.config(
-            default=os.environ.get("DATABASE_URL"),
+        "default": dj_database_url.parse(
+            DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True,
+            ssl_require=True
         )
     }
 else:
-    # 🔥 Local Development (XAMPP MySQL)
+    # Local Development (MySQL - XAMPP)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
-            "NAME": "temple_db",   # Create this in phpMyAdmin
+            "NAME": "temple_db",
             "USER": "root",
-            "PASSWORD": "",        # XAMPP default
+            "PASSWORD": "",
             "HOST": "127.0.0.1",
             "PORT": "3306",
+            "OPTIONS": {
+                "init_command": "SET sql_mode='STRICT_TRANS_TABLES'"
+            }
         }
     }
 
@@ -153,3 +158,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 TIME_ZONE = "Asia/Kolkata"
 USE_TZ = True
+
+# ==================================================
+# SECURITY SETTINGS (Production Only)
+# ==================================================
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True

@@ -81,13 +81,27 @@ SIMPLE_JWT = {
 # CORS CONFIG
 # ==================================================
 
-# Only frontend domains here
 CORS_ALLOWED_ORIGINS = [
     "https://varahi-nakshatrapooja-app.vercel.app",
+    "https://nakshatra-temple-app.vercel.app",
     "http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
 
 # ==================================================
 # DATABASE CONFIGURATION

@@ -1,16 +1,14 @@
-import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import API from "../services/api";
 import "./Nakshatras.css";
 
 function Nakshatras() {
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const duplicateRows = location.state?.duplicateRows || [];
-  const invalidRows = location.state?.invalidRows || [];
-
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [duplicateRows, setDuplicateRows] = useState([]);
+  const [invalidRows, setInvalidRows] = useState([]);
+  const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [error, setError] = useState("");
 
@@ -24,9 +22,33 @@ function Nakshatras() {
     "UTHRUTTATHI","REVATHI"
   ];
 
+  // ================= FETCH DATA =================
+  useEffect(() => {
+    fetchDuplicates();
+    fetchInvalids();
+  }, []);
+
+  const fetchDuplicates = async () => {
+    try {
+      const res = await API.get("duplicates/");
+      setDuplicateRows(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchInvalids = async () => {
+    try {
+      const res = await API.get("invalids/");
+      setInvalidRows(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // ================= START EDIT =================
-  const startEditing = (row, index) => {
-    setEditingIndex(index);
+  const startEditing = (row) => {
+    setEditingId(row.id);
     setEditData({
       name: row.name,
       country_code: row.country_code,
@@ -51,7 +73,17 @@ function Nakshatras() {
         nakshatra: editData.nakshatra.toUpperCase(),
       });
 
-      // Redirect to that nakshatra table
+      // Delete from duplicate/invalid table after fixing
+      if (duplicateRows.find((r) => r.id === editingId)) {
+        await API.delete(`duplicates/${editingId}/`);
+        fetchDuplicates();
+      }
+
+      if (invalidRows.find((r) => r.id === editingId)) {
+        await API.delete(`invalids/${editingId}/`);
+        fetchInvalids();
+      }
+
       navigate(`/nakshatras/${editData.nakshatra.toUpperCase()}`);
 
     } catch (err) {
@@ -60,8 +92,21 @@ function Nakshatras() {
     }
   };
 
+  // ================= DELETE ROW =================
+  const deleteRow = async (type, id) => {
+    try {
+      await API.delete(`${type}/${id}/`);
+
+      if (type === "duplicates") fetchDuplicates();
+      if (type === "invalids") fetchInvalids();
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // ================= TABLE RENDER =================
-  const renderTable = (rows, title) =>
+  const renderTable = (rows, title, type) =>
     rows.length > 0 && (
       <div className="result-card">
         <h3>{title} ({rows.length})</h3>
@@ -77,10 +122,10 @@ function Nakshatras() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
-              <tr key={index}>
+            {rows.map((row) => (
+              <tr key={row.id}>
                 <td>
-                  {editingIndex === index ? (
+                  {editingId === row.id ? (
                     <input
                       value={editData.name}
                       onChange={(e) =>
@@ -93,7 +138,7 @@ function Nakshatras() {
                 </td>
 
                 <td>
-                  {editingIndex === index ? (
+                  {editingId === row.id ? (
                     <input
                       value={editData.country_code}
                       onChange={(e) =>
@@ -106,7 +151,7 @@ function Nakshatras() {
                 </td>
 
                 <td>
-                  {editingIndex === index ? (
+                  {editingId === row.id ? (
                     <input
                       value={editData.phone}
                       onChange={(e) =>
@@ -119,7 +164,7 @@ function Nakshatras() {
                 </td>
 
                 <td>
-                  {editingIndex === index ? (
+                  {editingId === row.id ? (
                     <input
                       value={editData.nakshatra}
                       onChange={(e) =>
@@ -132,12 +177,18 @@ function Nakshatras() {
                 </td>
 
                 <td>
-                  {editingIndex === index ? (
+                  {editingId === row.id ? (
                     <button onClick={handleSave}>Save</button>
                   ) : (
-                    <button onClick={() => startEditing(row, index)}>
-                      Edit
-                    </button>
+                    <>
+                      <button onClick={() => startEditing(row)}>Edit</button>
+                      <button
+                        onClick={() => deleteRow(type, row.id)}
+                        style={{ marginLeft: "10px", background: "red" }}
+                      >
+                        Delete
+                      </button>
+                    </>
                   )}
                 </td>
               </tr>
@@ -156,7 +207,6 @@ function Nakshatras() {
         <h2>Select Nakshatra</h2>
       </div>
 
-      {/* NAKSHATRA GRID */}
       <div className="nakshatra-grid">
         {nakshatras.map((n, index) => (
           <div
@@ -169,11 +219,8 @@ function Nakshatras() {
         ))}
       </div>
 
-      {/* DUPLICATE TABLE */}
-      {renderTable(duplicateRows, "Duplicate Entries")}
-
-      {/* INVALID TABLE */}
-      {renderTable(invalidRows, "Invalid Entries")}
+      {renderTable(duplicateRows, "Duplicate Entries", "duplicates")}
+      {renderTable(invalidRows, "Invalid Entries", "invalids")}
 
       {duplicateRows.length === 0 && invalidRows.length === 0 && (
         <p style={{ marginTop: "20px" }}>

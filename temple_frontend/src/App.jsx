@@ -5,6 +5,8 @@ import Register from "./pages/Register";
 import AddDevotee from "./pages/AddDevotee";
 import Nakshatras from "./pages/Nakshatras";
 import NakshatraTable from "./pages/NakshatraTable";
+import DuplicatePage from "./pages/DuplicatePage";
+import InvalidPage from "./pages/InvalidPage";
 import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
@@ -38,6 +40,25 @@ function App() {
         element={
           <PrivateRoute>
             <NakshatraTable />
+          </PrivateRoute>
+        }
+      />
+
+      {/* NEW ROUTES 🔥 */}
+      <Route
+        path="/duplicates"
+        element={
+          <PrivateRoute>
+            <DuplicatePage />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/invalids"
+        element={
+          <PrivateRoute>
+            <InvalidPage />
           </PrivateRoute>
         }
       />

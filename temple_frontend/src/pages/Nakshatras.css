@@ -51,7 +51,7 @@
 }
 
 /* =========================================
-   Nakshatra Card
+   Nakshatra Card (Default)
 ========================================= */
 
 .nakshatra-card {
@@ -69,7 +69,7 @@
   overflow: hidden;
 }
 
-/* Neon border */
+/* Neon border animation */
 .nakshatra-card::before {
   content: "";
   position: absolute;
@@ -101,15 +101,34 @@
 }
 
 /* =========================================
-   🔴 Special Cards
+   🔴 Duplicate Card
 ========================================= */
 
-.special-card {
-  border: 1px solid rgba(255, 80, 80, 0.6);
+.duplicate-card {
+  border: 1px solid rgba(255, 80, 80, 0.7);
 }
 
+.duplicate-card:hover {
+  box-shadow: 0 15px 35px rgba(255, 0, 0, 0.6);
+}
+
+/* =========================================
+   🟡 Invalid Card
+========================================= */
+
+.invalid-card {
+  border: 1px solid rgba(255, 200, 0, 0.7);
+}
+
+.invalid-card:hover {
+  box-shadow: 0 15px 35px rgba(255, 200, 0, 0.6);
+}
+
+/* =========================================
+   🔥 Alert Glow (when count > 0)
+========================================= */
+
 .alert-card {
-  box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
   animation: alertPulse 1.8s infinite;
 }
 

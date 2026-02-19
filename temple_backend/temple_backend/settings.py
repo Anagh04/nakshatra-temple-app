@@ -82,7 +82,7 @@ SIMPLE_JWT = {
 # ==================================================
 
 CORS_ALLOWED_ORIGINS = [
-    "https://varahi-nakshatra-pooja-app.vercel.app",
+    "https://varahi-nakshatrapooja-app.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = False

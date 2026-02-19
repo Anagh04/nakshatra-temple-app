@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -9,7 +9,6 @@ import "./NakshatraTable.css";
 
 function NakshatraTable() {
   const { name } = useParams();
-  const navigate = useNavigate();
 
   const [devotees, setDevotees] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -144,13 +143,7 @@ function NakshatraTable() {
 
   // ================= CSV DOWNLOAD =================
   const downloadCSV = () => {
-    const headers = [
-      "No",
-      "Name",
-      "Country Code",
-      "Phone",
-      "Date & Time",
-    ];
+    const headers = ["No", "Name", "Country Code", "Phone", "Date & Time"];
 
     const rows = devotees.map((d, i) => [
       i + 1,
@@ -186,9 +179,6 @@ function NakshatraTable() {
         </div>
 
         <div className="header-actions">
-          <button onClick={() => navigate("/nakshatras")} className="header-btn">
-            Back
-          </button>
           <button onClick={downloadPDF} className="download-btn">
             PDF
           </button>

@@ -22,7 +22,7 @@
 .table-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center; /* improved alignment */
   margin-bottom: 25px;
 }
 
@@ -42,19 +42,10 @@
   justify-content: flex-end;
 }
 
-/* 🔥 FIX — Keep header buttons horizontal */
-.header-btn,
-.download-btn {
-  width: auto !important;
-  display: inline-block !important;
-  flex: 0 0 auto !important;
-}
-
 /* ========================================
    BUTTONS
 ======================================== */
 
-.header-btn,
 .download-btn,
 .edit-btn,
 .delete-btn,
@@ -233,7 +224,6 @@ tbody input:focus {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 
-
   z-index: 9999;
   animation: fadeIn 0.25s ease-in-out;
 }
@@ -252,7 +242,6 @@ tbody input:focus {
   background: rgba(20, 15, 60, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-
 
   border: 1px solid rgba(140, 120, 255, 0.25);
 

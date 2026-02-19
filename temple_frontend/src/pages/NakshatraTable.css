@@ -16,17 +16,89 @@
 }
 
 /* ========================================
-   HEADER
+   HEADER LAYOUT
 ======================================== */
+
+.table-header {
+  margin-bottom: 25px;
+}
+
+.title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
 
 .table-container h2 {
   font-size: 26px;
   font-weight: 600;
   letter-spacing: 1px;
-  margin-bottom: 20px;
   background: linear-gradient(90deg, #8e2de2, #4a00e0);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* ========================================
+   HEADER BUTTONS
+======================================== */
+
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ========================================
+   DOWNLOAD + DELETE BUTTONS
+======================================== */
+
+.pdf-btn,
+.csv-btn,
+.delete-nakshatra-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+/* PDF Button */
+.pdf-btn {
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  box-shadow: 0 0 12px rgba(255, 75, 43, 0.4);
+}
+
+.pdf-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 18px rgba(255, 75, 43, 0.7);
+}
+
+/* CSV Button */
+.csv-btn {
+  background: linear-gradient(135deg, #00b09b, #96c93d);
+  box-shadow: 0 0 12px rgba(0, 176, 155, 0.4);
+}
+
+.csv-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 18px rgba(0, 176, 155, 0.7);
+}
+
+/* Delete Table Button */
+.delete-nakshatra-btn {
+  background: linear-gradient(135deg, #8e2de2, #4a00e0);
+  box-shadow: 0 0 12px rgba(142, 45, 226, 0.4);
+}
+
+.delete-nakshatra-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(142, 45, 226, 0.7);
 }
 
 /* ========================================
@@ -127,7 +199,7 @@ tbody tr:hover {
 }
 
 /* ========================================
-   INPUTS (Edit Mode if reused)
+   INPUTS (Edit Mode)
 ======================================== */
 
 tbody input {
@@ -167,7 +239,6 @@ tbody input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: rgba(10, 10, 25, 0.75);
   backdrop-filter: blur(8px);
   z-index: 9999;
@@ -183,16 +254,12 @@ tbody input:focus {
   max-width: 90%;
   padding: 35px 40px;
   border-radius: 20px;
-
   background: rgba(20, 15, 60, 0.95);
   backdrop-filter: blur(20px);
-
   border: 1px solid rgba(140, 120, 255, 0.25);
-
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.6),
     0 0 30px rgba(140, 120, 255, 0.2);
-
   text-align: center;
   animation: popupScale 0.3s ease;
 }
@@ -258,5 +325,10 @@ tbody input:focus {
 
   .search-box input {
     font-size: 13px;
+  }
+
+  .header-buttons {
+    width: 100%;
+    justify-content: flex-start;
   }
 }

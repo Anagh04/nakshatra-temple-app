@@ -1,12 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import API from "../services/api";
 import "./NakshatraTable.css";
 
 function NakshatraTable() {
   const { name } = useParams();
-
-  // ✅ Safe uppercase handling
   const nakshatraName = name ? name.toUpperCase() : "";
 
   const [devotees, setDevotees] = useState([]);
@@ -21,7 +23,7 @@ function NakshatraTable() {
     phone: "",
   });
 
-  // ================= FETCH DEVOTEES =================
+  // ================= FETCH =================
   const fetchDevotees = async () => {
     if (!nakshatraName) return;
 
@@ -39,11 +41,70 @@ function NakshatraTable() {
     fetchDevotees();
   }, [nakshatraName]);
 
-  // ================= SEARCH FILTER =================
-  const filteredDevotees = devotees.filter((devotee) =>
-    devotee.name.includes(searchTerm.toUpperCase()) ||
-    devotee.phone.includes(searchTerm)
+  // ================= FILTER =================
+  const filteredDevotees = devotees.filter(
+    (devotee) =>
+      devotee.name.includes(searchTerm.toUpperCase()) ||
+      devotee.phone.includes(searchTerm)
   );
+
+  // ================= PDF DOWNLOAD =================
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+
+    const tableColumn = [
+      "No",
+      "Name",
+      "Country Code",
+      "Phone",
+      "Date & Time",
+    ];
+
+    const tableRows = [];
+
+    filteredDevotees.forEach((devotee, index) => {
+      tableRows.push([
+        index + 1,
+        devotee.name,
+        devotee.country_code,
+        devotee.phone,
+        new Date(devotee.created_at).toLocaleString(),
+      ]);
+    });
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+    });
+
+    doc.save(`${nakshatraName}_nakshatra.pdf`);
+  };
+
+  // ================= CSV DOWNLOAD =================
+  const downloadCSV = () => {
+    const csvData = filteredDevotees.map((devotee, index) => ({
+      No: index + 1,
+      Name: devotee.name,
+      CountryCode: devotee.country_code,
+      Phone: devotee.phone,
+      DateTime: new Date(devotee.created_at).toLocaleString(),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(csvData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Nakshatra");
+
+    const csvOutput = XLSX.write(workbook, {
+      bookType: "csv",
+      type: "array",
+    });
+
+    const blob = new Blob([csvOutput], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    saveAs(blob, `${nakshatraName}_nakshatra.csv`);
+  };
 
   // ================= DELETE SINGLE =================
   const handleDelete = async (id) => {
@@ -57,7 +118,7 @@ function NakshatraTable() {
     }
   };
 
-  // ================= START EDIT =================
+  // ================= EDIT START =================
   const startEditing = (devotee) => {
     setEditingId(devotee.id);
     setEditData({
@@ -88,7 +149,7 @@ function NakshatraTable() {
     }
   };
 
-  // ================= DELETE ENTIRE TABLE =================
+  // ================= DELETE ENTIRE =================
   const handleDeleteNakshatra = async () => {
     setLoading(true);
 
@@ -107,21 +168,30 @@ function NakshatraTable() {
 
   return (
     <div className="table-container">
-
       <div className="table-header">
         <div className="title-section">
           <h2>{nakshatraName} NAKSHATRA</h2>
 
-          <button
-            className="delete-nakshatra-btn"
-            onClick={() => setShowConfirmPopup(true)}
-          >
-            Delete Table
-          </button>
+          <div className="header-buttons">
+            <button className="pdf-btn" onClick={downloadPDF}>
+              Download PDF
+            </button>
+
+            <button className="csv-btn" onClick={downloadCSV}>
+              Download CSV
+            </button>
+
+            <button
+              className="delete-nakshatra-btn"
+              onClick={() => setShowConfirmPopup(true)}
+            >
+              Delete Table
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 🔍 SEARCH */}
+      {/* SEARCH */}
       <div className="search-box">
         <input
           type="text"
@@ -240,7 +310,7 @@ function NakshatraTable() {
         </table>
       </div>
 
-      {/* 🔥 CONFIRM DELETE POPUP */}
+      {/* DELETE POPUP */}
       {showConfirmPopup && (
         <div className="popup-overlay">
           <div className="popup-card">
@@ -266,7 +336,6 @@ function NakshatraTable() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -26,7 +26,6 @@ class DevoteeViewSet(viewsets.ModelViewSet):
     serializer_class = DevoteeSerializer
     permission_classes = [IsAuthenticated]
 
-    # 🔍 Optional filtering by nakshatra
     def get_queryset(self):
         queryset = super().get_queryset()
         nakshatra = self.request.query_params.get("nakshatra")
@@ -88,7 +87,7 @@ def register(request):
 
 # ============================================================
 # BULK FILE UPLOAD (CSV + XLSX)
-# Saves NAME + NAKSHATRA in UPPERCASE
+# Requires: name, countrycode, phone, nakshatra
 # ============================================================
 
 @api_view(["POST"])
@@ -105,7 +104,9 @@ def bulk_upload(request):
         )
 
     try:
+        # ------------------------------
         # Read file
+        # ------------------------------
         if file.name.endswith(".csv"):
             df = pd.read_csv(file)
         elif file.name.endswith(".xlsx"):
@@ -116,9 +117,21 @@ def bulk_upload(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        df.columns = df.columns.str.strip().str.lower()
+        # ------------------------------
+        # Clean column names
+        # ------------------------------
+        df.columns = (
+            df.columns
+            .str.strip()
+            .str.lower()
+            .str.replace(" ", "")
+        )
 
-        required_columns = {"name", "phone", "nakshatra"}
+        # ------------------------------
+        # Required columns check
+        # ------------------------------
+        required_columns = {"name", "countrycode", "phone", "nakshatra"}
+
         if not required_columns.issubset(set(df.columns)):
             return Response(
                 {"error": f"Missing required columns: {required_columns}"},
@@ -133,12 +146,15 @@ def bulk_upload(request):
         duplicate_count = 0
         invalid_count = 0
 
+        # ------------------------------
+        # Process rows
+        # ------------------------------
         for _, row in df.iterrows():
 
             name = str(row.get("name", "")).strip().upper()
+            country_code = str(row.get("countrycode", "")).strip()
             phone_raw = row.get("phone")
             raw_nakshatra = str(row.get("nakshatra", "")).strip().lower()
-            country_code = str(row.get("countrycode", "")).strip()
 
             # Clean phone
             phone = ""
@@ -148,13 +164,12 @@ def bulk_upload(request):
                 except:
                     phone = str(phone_raw).strip()
 
-            if not name or not phone or not raw_nakshatra:
+            if not name or not phone or not raw_nakshatra or not country_code:
                 invalid_count += 1
                 continue
 
             # Normalize spelling variation
             raw_nakshatra = raw_nakshatra.replace("shw", "sw")
-
             formatted_nakshatra = raw_nakshatra.upper()
 
             if formatted_nakshatra not in valid_nakshatras:

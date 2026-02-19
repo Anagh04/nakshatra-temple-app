@@ -1,3 +1,7 @@
+# ============================================================
+# IMPORTS
+# ============================================================
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
@@ -14,69 +18,29 @@ from .serializers import DevoteeSerializer
 
 
 # ============================================================
-# Devotee ViewSet (Single Entry + JWT Protected)
+# DEVOTEE VIEWSET (JWT PROTECTED CRUD)
 # ============================================================
+
 class DevoteeViewSet(viewsets.ModelViewSet):
-    queryset = Devotee.objects.all().order_by("created_at")
+    queryset = Devotee.objects.all().order_by("-created_at")
     serializer_class = DevoteeSerializer
     permission_classes = [IsAuthenticated]
 
-    # 🔍 Filter by nakshatra
+    # 🔍 Optional filtering by nakshatra
     def get_queryset(self):
         queryset = super().get_queryset()
         nakshatra = self.request.query_params.get("nakshatra")
 
         if nakshatra:
-            queryset = queryset.filter(nakshatra=nakshatra)
+            queryset = queryset.filter(nakshatra=nakshatra.upper())
 
         return queryset
 
-    # ✅ FIXED CREATE METHOD (Single Entry)
-    def create(self, request, *args, **kwargs):
-
-        serializer = self.get_serializer(data=request.data)
-
-        if serializer.is_valid():
-
-            name = serializer.validated_data.get("name")
-            phone = serializer.validated_data.get("phone")
-            country_code = serializer.validated_data.get("country_code")
-            nakshatra = serializer.validated_data.get("nakshatra")
-
-            # 🔁 Duplicate check
-            exists = Devotee.objects.filter(
-                name=name,
-                phone=phone,
-                country_code=country_code,
-                nakshatra=nakshatra,
-            ).exists()
-
-            if exists:
-                return Response(
-                    {"error": "Devotee already exists for this Nakshatra"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            serializer.save()
-
-            return Response(
-                {
-                    "message": "Devotee added successfully",
-                    "data": serializer.data,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-
-        # ❌ Validation errors
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
 
 # ============================================================
-# REGISTER API (Public)
+# REGISTER API (PUBLIC)
 # ============================================================
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @parser_classes([JSONParser])
@@ -123,15 +87,16 @@ def register(request):
 
 
 # ============================================================
-# BULK FILE UPLOAD (CSV + XLSX Supported)
+# BULK FILE UPLOAD (CSV + XLSX)
+# Saves NAME + NAKSHATRA in UPPERCASE
 # ============================================================
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
 def bulk_upload(request):
 
     file = request.FILES.get("file")
-    selected_nakshatra = request.data.get("nakshatra")
 
     if not file:
         return Response(
@@ -139,59 +104,69 @@ def bulk_upload(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if not selected_nakshatra:
-        return Response(
-            {"error": "Nakshatra is required"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
     try:
+        # Read file
         if file.name.endswith(".csv"):
             df = pd.read_csv(file)
         elif file.name.endswith(".xlsx"):
             df = pd.read_excel(file, engine="openpyxl")
         else:
             return Response(
-                {"error": "Upload CSV or XLSX file"},
+                {"error": "Upload CSV or XLSX file only"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         df.columns = df.columns.str.strip().str.lower()
 
-        required_columns = {"name", "phone"}
+        required_columns = {"name", "phone", "nakshatra"}
         if not required_columns.issubset(set(df.columns)):
             return Response(
-                {"error": f"Required columns missing. Needed: {required_columns}"},
+                {"error": f"Missing required columns: {required_columns}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        valid_nakshatras = [
+            choice[0].upper() for choice in Devotee.NAKSHATRA_CHOICES
+        ]
 
         created_count = 0
         duplicate_count = 0
         invalid_count = 0
 
         for _, row in df.iterrows():
-            name = str(row.get("name", "")).strip()
 
+            name = str(row.get("name", "")).strip().upper()
             phone_raw = row.get("phone")
-            phone = ""
+            raw_nakshatra = str(row.get("nakshatra", "")).strip().lower()
+            country_code = str(row.get("countrycode", "")).strip()
 
+            # Clean phone
+            phone = ""
             if pd.notna(phone_raw):
                 try:
                     phone = str(int(float(phone_raw)))
                 except:
                     phone = str(phone_raw).strip()
 
-            country_code = str(row.get("countrycode", "")).strip()
-
-            if not name or not phone:
+            if not name or not phone or not raw_nakshatra:
                 invalid_count += 1
                 continue
 
+            # Normalize spelling variation
+            raw_nakshatra = raw_nakshatra.replace("shw", "sw")
+
+            formatted_nakshatra = raw_nakshatra.upper()
+
+            if formatted_nakshatra not in valid_nakshatras:
+                invalid_count += 1
+                continue
+
+            # Duplicate check
             exists = Devotee.objects.filter(
                 name=name,
                 phone=phone,
                 country_code=country_code,
-                nakshatra=selected_nakshatra,
+                nakshatra=formatted_nakshatra,
             ).exists()
 
             if exists:
@@ -201,8 +176,8 @@ def bulk_upload(request):
             Devotee.objects.create(
                 name=name,
                 phone=phone,
-                nakshatra=selected_nakshatra,
                 country_code=country_code,
+                nakshatra=formatted_nakshatra,
             )
 
             created_count += 1
@@ -225,11 +200,16 @@ def bulk_upload(request):
 
 
 # ============================================================
-# DELETE ALL DEVOTEES OF A NAKSHATRA
+# DELETE ALL DEVOTEES UNDER A NAKSHATRA
 # ============================================================
+
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_nakshatra_data(request, nakshatra_name):
+
+    nakshatra_name = nakshatra_name.strip().lower()
+    nakshatra_name = nakshatra_name.replace("shw", "sw")
+    nakshatra_name = nakshatra_name.upper()
 
     devotees = Devotee.objects.filter(nakshatra=nakshatra_name)
 

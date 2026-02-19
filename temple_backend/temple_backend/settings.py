@@ -17,10 +17,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret")
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
+# Only backend domains here
 ALLOWED_HOSTS = [
     "nakshatra-temple-app.onrender.com",
-    "nakshatra-temple-app.vercel.app",
-    "varahi-nakshatrapooja-app.vercel.app",
     "localhost",
     "127.0.0.1",
 ]
@@ -49,7 +48,7 @@ INSTALLED_APPS = [
 # ==================================================
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # MUST be first
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -81,27 +80,23 @@ SIMPLE_JWT = {
 # ==================================================
 # CORS CONFIG
 # ==================================================
-# ==================================================
-# CORS CONFIG
-# ==================================================
 
+# Only frontend domains here
 CORS_ALLOWED_ORIGINS = [
     "https://varahi-nakshatrapooja-app.vercel.app",
-    "https://nakshatra-temple-app.vercel.app",
     "http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-
 # ==================================================
 # DATABASE CONFIGURATION
 # ==================================================
 
-# Production (Render PostgreSQL)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
+    # Production (Render PostgreSQL)
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
@@ -166,7 +161,7 @@ TIME_ZONE = "Asia/Kolkata"
 USE_TZ = True
 
 # ==================================================
-# SECURITY SETTINGS (Production Only)
+# PRODUCTION SECURITY
 # ==================================================
 
 if not DEBUG:

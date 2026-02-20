@@ -110,6 +110,40 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
+  // ================= PDF =================
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+
+    const rows = filteredData.map((item, i) => [
+      i + 1,
+      item.name,
+      item.country_code,
+      item.phone,
+      item.nakshatra || "",
+    ]);
+
+    autoTable(doc, {
+      head: [["No", "Name", "Country Code", "Phone", "Nakshatra"]],
+      body: rows,
+    });
+
+    doc.save("data.pdf");
+    toast.success("PDF downloaded");
+  };
+
+  // ================= CSV =================
+  const downloadCSV = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+    const csv = XLSX.write(workbook, { bookType: "csv", type: "array" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+    saveAs(blob, "data.csv");
+    toast.success("CSV downloaded");
+  };
+
   // ================= EDIT =================
   const startEdit = (item) => {
     setEditingId(item.id);
@@ -145,7 +179,7 @@ function NakshatraTable({ type = "devotees" }) {
         nakshatra: editData.nakshatra.toUpperCase(),
       });
 
-      await API.delete(`invalids/${id}`);
+      await API.delete(`invalids/${id}/`);
       toast.success("Converted to valid devotee");
       cancelEdit();
       fetchData();
@@ -167,7 +201,7 @@ function NakshatraTable({ type = "devotees" }) {
             nakshatra: editData.nakshatra.toUpperCase(),
           });
 
-          await API.delete(`invalids/${id}`);
+          await API.delete(`invalids/${id}/`);
           toast.warning("Already exists. Moved to duplicate list.");
           cancelEdit();
           fetchData();
@@ -259,11 +293,13 @@ function NakshatraTable({ type = "devotees" }) {
               <th>Name</th>
               <th>Country Code</th>
               <th>Phone</th>
+              {isDevoteePage && <th>Date & Time</th>}
               {(isDuplicatePage || isInvalidPage) && <th>Nakshatra</th>}
               {isInvalidPage && <th>Reason</th>}
               <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
             {filteredData.map((item, index) => (
               <tr key={item.id}>
@@ -302,6 +338,20 @@ function NakshatraTable({ type = "devotees" }) {
                   ) : item.phone}
                 </td>
 
+                {isDevoteePage && (
+                  <td>
+                    {item.created_at
+                      ? new Date(item.created_at).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "-"}
+                  </td>
+                )}
+
                 {(isDuplicatePage || isInvalidPage) && (
                   <td>
                     {editingId === item.id && isInvalidPage ? (
@@ -311,7 +361,6 @@ function NakshatraTable({ type = "devotees" }) {
                           setEditData({ ...editData, nakshatra: e.target.value })
                         }
                       >
-                        {/* Show invalid value if not in list */}
                         {editData.nakshatra &&
                           !NAKSHATRA_OPTIONS.includes(editData.nakshatra.toUpperCase()) && (
                             <option value={editData.nakshatra}>
@@ -354,6 +403,7 @@ function NakshatraTable({ type = "devotees" }) {
                     </>
                   )}
                 </td>
+
               </tr>
             ))}
           </tbody>

@@ -44,6 +44,8 @@ function NakshatraTable({ type = "devotees" }) {
 
       const response = await API.get(endpoint);
       setData(response.data);
+    } catch (err) {
+      console.error(err);
     } finally {
       setFetchLoading(false);
     }
@@ -72,7 +74,7 @@ function NakshatraTable({ type = "devotees" }) {
       name: item.name,
       country_code: item.country_code,
       phone: item.phone,
-      nakshatra: item.nakshatra || ""
+      nakshatra: item.nakshatra || "",
     });
   };
 
@@ -145,6 +147,66 @@ function NakshatraTable({ type = "devotees" }) {
     setLoading(false);
   };
 
+  // ================= PDF =================
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+
+    const headers = isInvalidPage
+      ? ["No", "Name", "Country Code", "Phone", "Nakshatra", "Reason"]
+      : isDuplicatePage
+      ? ["No", "Name", "Country Code", "Phone", "Nakshatra", "Date"]
+      : ["No", "Name", "Country Code", "Phone", "Date"];
+
+    const rows = filteredData.map((item, i) =>
+      isInvalidPage
+        ? [
+            i + 1,
+            item.name,
+            item.country_code,
+            item.phone,
+            item.nakshatra,
+            item.reason,
+          ]
+        : isDuplicatePage
+        ? [
+            i + 1,
+            item.name,
+            item.country_code,
+            item.phone,
+            item.nakshatra,
+            new Date(item.created_at).toLocaleString(),
+          ]
+        : [
+            i + 1,
+            item.name,
+            item.country_code,
+            item.phone,
+            new Date(item.created_at).toLocaleString(),
+          ]
+    );
+
+    autoTable(doc, { head: [headers], body: rows });
+    doc.save("data.pdf");
+  };
+
+  // ================= CSV =================
+  const downloadCSV = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+    const csv = XLSX.write(workbook, {
+      bookType: "csv",
+      type: "array",
+    });
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    saveAs(blob, "data.csv");
+  };
+
   return (
     <div className="table-container">
 
@@ -159,6 +221,8 @@ function NakshatraTable({ type = "devotees" }) {
         </h2>
 
         <div className="header-buttons">
+          <button onClick={downloadPDF}>Download PDF</button>
+          <button onClick={downloadCSV}>Download CSV</button>
           <button onClick={() => setShowConfirmPopup(true)}>
             Delete All
           </button>
@@ -340,12 +404,14 @@ function NakshatraTable({ type = "devotees" }) {
         )}
       </div>
 
-      {/* CONFIRM DELETE */}
+      {/* CONFIRM POPUP */}
       {showConfirmPopup && (
         <div className="popup-overlay">
           <div className="popup-card">
             <h3>Are you sure?</h3>
-            <button onClick={() => setShowConfirmPopup(false)}>Cancel</button>
+            <button onClick={() => setShowConfirmPopup(false)}>
+              Cancel
+            </button>
             <button onClick={handleDeleteAll}>
               {loading ? "Deleting..." : "Confirm Delete"}
             </button>

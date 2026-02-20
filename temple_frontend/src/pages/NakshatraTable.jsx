@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -20,9 +21,13 @@ function NakshatraTable({ type = "devotees" }) {
   const nakshatraName = name ? name.toUpperCase() : "";
 
   const [data, setData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedNakshatra, setSelectedNakshatra] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [fetchLoading, setFetchLoading] = useState(false);
+  const [sortField, setSortField] = useState("date");
+  const [sortOrder, setSortOrder] = useState("desc");
 
   const isDuplicatePage = type === "duplicates";
   const isInvalidPage = type === "invalids";
@@ -40,7 +45,7 @@ function NakshatraTable({ type = "devotees" }) {
       const response = await API.get(endpoint);
       setData(response.data);
     } catch (err) {
-      console.error(err);
+      toast.error("Failed to fetch data");
     } finally {
       setFetchLoading(false);
     }
@@ -50,15 +55,93 @@ function NakshatraTable({ type = "devotees" }) {
     fetchData();
   }, [nakshatraName, type]);
 
-  // ================= EDIT =================
+  // ================= FILTER + SORT =================
+  const filteredData = useMemo(() => {
+    let filtered = data.filter((item) => {
+      const matchSearch =
+        item.name?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+        item.phone?.includes(searchTerm);
+
+      const matchNak =
+        !selectedNakshatra || item.nakshatra === selectedNakshatra;
+
+      return matchSearch && matchNak;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortField === "name") {
+        return sortOrder === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      }
+
+      if (sortField === "date" && a.created_at && b.created_at) {
+        return sortOrder === "asc"
+          ? new Date(a.created_at) - new Date(b.created_at)
+          : new Date(b.created_at) - new Date(a.created_at);
+      }
+
+      return 0;
+    });
+
+    return filtered;
+  }, [data, searchTerm, selectedNakshatra, sortField, sortOrder]);
+
+  // ================= DELETE ALL =================
+  const handleDeleteAll = async () => {
+    if (!window.confirm("Delete all records?")) return;
+
+    try {
+      let endpoint = "";
+      if (isDuplicatePage) endpoint = "delete-all-duplicates/";
+      else if (isInvalidPage) endpoint = "delete-all-invalids/";
+      else endpoint = `delete-nakshatra/${nakshatraName}/`;
+
+      await API.delete(endpoint);
+      toast.success("All records deleted successfully");
+      fetchData();
+    } catch {
+      toast.error("Delete all failed");
+    }
+  };
+
+  // ================= PDF =================
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    const rows = filteredData.map((item, i) => [
+      i + 1,
+      item.name,
+      item.country_code,
+      item.phone,
+      item.nakshatra || "",
+    ]);
+
+    autoTable(doc, {
+      head: [["No", "Name", "Country Code", "Phone", "Nakshatra"]],
+      body: rows,
+    });
+
+    doc.save("data.pdf");
+    toast.success("PDF downloaded");
+  };
+
+  // ================= CSV =================
+  const downloadCSV = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+    const csv = XLSX.write(workbook, { bookType: "csv", type: "array" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+    saveAs(blob, "data.csv");
+    toast.success("CSV downloaded");
+  };
+
+  // ================= EDIT / CONVERT =================
   const startEdit = (item) => {
     setEditingId(item.id);
-    setEditData({
-      name: item.name,
-      country_code: item.country_code,
-      phone: item.phone,
-      nakshatra: item.nakshatra || nakshatraName,
-    });
+    setEditData({ ...item });
   };
 
   const cancelEdit = () => {
@@ -66,42 +149,37 @@ function NakshatraTable({ type = "devotees" }) {
     setEditData({});
   };
 
-  // ================= UPDATE DEVOTEE =================
   const handleUpdate = async (id) => {
     try {
       await API.put(`devotees/${id}/`, {
         ...editData,
         name: editData.name.toUpperCase(),
-        nakshatra: nakshatraName,
       });
-
+      toast.success("Updated successfully");
       cancelEdit();
       fetchData();
-    } catch (err) {
-      alert("Update failed");
+    } catch {
+      toast.error("Update failed");
     }
   };
 
-  // ================= CONVERT INVALID =================
   const handleConvert = async (id) => {
     try {
       await API.post("devotees/", {
+        ...editData,
         name: editData.name.toUpperCase(),
-        country_code: editData.country_code,
-        phone: editData.phone,
         nakshatra: editData.nakshatra.toUpperCase(),
       });
 
       await API.delete(`invalids/${id}/`);
-
+      toast.success("Converted to valid devotee");
       cancelEdit();
       fetchData();
-    } catch (err) {
-      alert("Conversion failed");
+    } catch {
+      toast.error("Conversion failed");
     }
   };
 
-  // ================= DELETE =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this entry?")) return;
 
@@ -112,9 +190,10 @@ function NakshatraTable({ type = "devotees" }) {
       else endpoint = `devotees/${id}/`;
 
       await API.delete(endpoint);
+      toast.success("Deleted successfully");
       fetchData();
     } catch {
-      alert("Delete failed");
+      toast.error("Delete failed");
     }
   };
 
@@ -129,6 +208,44 @@ function NakshatraTable({ type = "devotees" }) {
           : `${nakshatraName} Nakshatra`}
       </h2>
 
+      {/* ================= CONTROLS ================= */}
+      <div className="controls">
+        <input
+          type="text"
+          placeholder="Search name or phone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        {(isDuplicatePage || isInvalidPage) && (
+          <select
+            value={selectedNakshatra}
+            onChange={(e) => setSelectedNakshatra(e.target.value)}
+          >
+            <option value="">All Nakshatras</option>
+            {NAKSHATRA_OPTIONS.map((nak) => (
+              <option key={nak} value={nak}>{nak}</option>
+            ))}
+          </select>
+        )}
+
+        {/* SORT CONTROLS */}
+        <select value={sortField} onChange={(e) => setSortField(e.target.value)}>
+          <option value="date">Sort by Date</option>
+          <option value="name">Sort by Name</option>
+        </select>
+
+        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+          <option value="desc">Descending</option>
+          <option value="asc">Ascending</option>
+        </select>
+
+        <button onClick={downloadPDF}>PDF</button>
+        <button onClick={downloadCSV}>CSV</button>
+        <button onClick={handleDeleteAll}>Delete All</button>
+      </div>
+
+      {/* ================= TABLE ================= */}
       {fetchLoading ? (
         <p>Loading...</p>
       ) : (
@@ -145,7 +262,7 @@ function NakshatraTable({ type = "devotees" }) {
             </tr>
           </thead>
           <tbody>
-            {data.map((item, index) => (
+            {filteredData.map((item, index) => (
               <tr key={item.id}>
                 <td>{index + 1}</td>
 
@@ -157,9 +274,7 @@ function NakshatraTable({ type = "devotees" }) {
                         setEditData({ ...editData, name: e.target.value })
                       }
                     />
-                  ) : (
-                    item.name
-                  )}
+                  ) : item.name}
                 </td>
 
                 <td>
@@ -170,9 +285,7 @@ function NakshatraTable({ type = "devotees" }) {
                         setEditData({ ...editData, country_code: e.target.value })
                       }
                     />
-                  ) : (
-                    item.country_code
-                  )}
+                  ) : item.country_code}
                 </td>
 
                 <td>
@@ -183,9 +296,7 @@ function NakshatraTable({ type = "devotees" }) {
                         setEditData({ ...editData, phone: e.target.value })
                       }
                     />
-                  ) : (
-                    item.phone
-                  )}
+                  ) : item.phone}
                 </td>
 
                 {(isDuplicatePage || isInvalidPage) && (
@@ -198,14 +309,10 @@ function NakshatraTable({ type = "devotees" }) {
                         }
                       >
                         {NAKSHATRA_OPTIONS.map((nak) => (
-                          <option key={nak} value={nak}>
-                            {nak}
-                          </option>
+                          <option key={nak} value={nak}>{nak}</option>
                         ))}
                       </select>
-                    ) : (
-                      item.nakshatra
-                    )}
+                    ) : item.nakshatra}
                   </td>
                 )}
 

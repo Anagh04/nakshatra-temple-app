@@ -7,7 +7,7 @@ import { saveAs } from "file-saver";
 import API from "../services/api";
 import "./NakshatraTable.css";
 
-/* ✅ MATCHES BACKEND EXACTLY */
+/* ✅ EXACTLY MATCHES BACKEND */
 const NAKSHATRA_OPTIONS = [
   "ASWATHY","BHARANI","KARTHIKA","ROHINI","MAKAYIRAM","THIRUVATHIRA",
   "PUNARTHAM","POOYAM","AYILYAM","MAKAM","POORAM","UTHRAM",
@@ -39,7 +39,6 @@ function NakshatraTable({ type = "devotees" }) {
     setFetchLoading(true);
     try {
       let endpoint = "";
-
       if (isDuplicatePage) endpoint = "duplicates/";
       else if (isInvalidPage) endpoint = "invalids/";
       else endpoint = `devotees/?nakshatra=${nakshatraName}`;
@@ -113,20 +112,18 @@ function NakshatraTable({ type = "devotees" }) {
       return;
     }
 
-    const finalNak = editData.nakshatra.toUpperCase();
-
     try {
       await API.post("devotees/", {
         name: editData.name.toUpperCase(),
         country_code: editData.country_code,
         phone: editData.phone,
-        nakshatra: finalNak,
+        nakshatra: editData.nakshatra.toUpperCase(),
       });
 
       await API.delete(`invalids/${id}/`);
 
       cancelEdit();
-      navigate(`/nakshatras/${finalNak}`);
+      fetchData();   // ✅ Stay on invalid page (no navigation)
     } catch (err) {
       alert(err.response?.data?.duplicate || "Conversion failed");
     }
@@ -213,7 +210,7 @@ function NakshatraTable({ type = "devotees" }) {
         </div>
       </div>
 
-      {/* SEARCH - UNCHANGED */}
+      {/* SEARCH (UNCHANGED) */}
       <div className="search-box">
         <input
           type="text"
@@ -261,6 +258,7 @@ function NakshatraTable({ type = "devotees" }) {
                 <tr key={item.id}>
                   <td>{i + 1}</td>
 
+                  {/* NAME */}
                   <td>
                     {editingId === item.id ? (
                       <input
@@ -275,9 +273,37 @@ function NakshatraTable({ type = "devotees" }) {
                     ) : item.name}
                   </td>
 
-                  <td>{item.country_code}</td>
-                  <td>{item.phone}</td>
+                  {/* COUNTRY CODE */}
+                  <td>
+                    {editingId === item.id ? (
+                      <input
+                        value={editData.country_code}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            country_code: e.target.value,
+                          })
+                        }
+                      />
+                    ) : item.country_code}
+                  </td>
 
+                  {/* PHONE */}
+                  <td>
+                    {editingId === item.id ? (
+                      <input
+                        value={editData.phone}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            phone: e.target.value,
+                          })
+                        }
+                      />
+                    ) : item.phone}
+                  </td>
+
+                  {/* NAKSHATRA */}
                   {(isDuplicatePage || isInvalidPage) && (
                     <td>
                       {editingId === item.id && isInvalidPage ? (

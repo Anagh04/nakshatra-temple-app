@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -17,6 +17,7 @@ const NAKSHATRA_OPTIONS = [
 
 function NakshatraTable({ type = "devotees" }) {
   const { name } = useParams();
+  const navigate = useNavigate();
   const nakshatraName = name ? name.toUpperCase() : "";
 
   const [data, setData] = useState([]);
@@ -85,14 +86,18 @@ function NakshatraTable({ type = "devotees" }) {
 
   // ================= UPDATE DEVOTEE =================
   const handleUpdate = async (id) => {
-    await API.put(`devotees/${id}/`, {
-      ...editData,
-      name: editData.name.toUpperCase(),
-      nakshatra: nakshatraName,
-    });
+    try {
+      await API.put(`devotees/${id}/`, {
+        ...editData,
+        name: editData.name.toUpperCase(),
+        nakshatra: nakshatraName,
+      });
 
-    cancelEdit();
-    fetchData();
+      cancelEdit();
+      fetchData();
+    } catch (err) {
+      alert("Update failed");
+    }
   };
 
   // ================= CONVERT INVALID =================
@@ -107,21 +112,29 @@ function NakshatraTable({ type = "devotees" }) {
       return;
     }
 
-    await API.post("devotees/", {
-      name: editData.name.toUpperCase(),
-      country_code: editData.country_code,
-      phone: editData.phone,
-      nakshatra: editData.nakshatra.toUpperCase(),
-    });
+    const finalNakshatra = editData.nakshatra.toUpperCase();
 
-    await API.delete(`invalids/${id}/`);
+    try {
+      await API.post("devotees/", {
+        name: editData.name.toUpperCase(),
+        country_code: editData.country_code,
+        phone: editData.phone,
+        nakshatra: finalNakshatra,
+      });
 
-    cancelEdit();
-    fetchData();
-    alert("Converted Successfully");
+      await API.delete(`invalids/${id}/`);
+
+      cancelEdit();
+
+      // 🔥 Redirect to correct Nakshatra page
+      navigate(`/nakshatras/${finalNakshatra}`);
+
+    } catch (err) {
+      alert("Conversion failed");
+    }
   };
 
-  // ================= DELETE =================
+  // ================= DELETE SINGLE =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this entry?")) return;
 
@@ -135,6 +148,7 @@ function NakshatraTable({ type = "devotees" }) {
     fetchData();
   };
 
+  // ================= DELETE ALL =================
   const handleDeleteAll = async () => {
     setLoading(true);
 
@@ -159,30 +173,12 @@ function NakshatraTable({ type = "devotees" }) {
 
     const rows = filteredData.map((item, i) =>
       isInvalidPage
-        ? [
-            i + 1,
-            item.name,
-            item.country_code,
-            item.phone,
-            item.nakshatra,
-            item.reason,
-          ]
+        ? [i + 1, item.name, item.country_code, item.phone, item.nakshatra, item.reason]
         : isDuplicatePage
-        ? [
-            i + 1,
-            item.name,
-            item.country_code,
-            item.phone,
-            item.nakshatra,
-            new Date(item.created_at).toLocaleString(),
-          ]
-        : [
-            i + 1,
-            item.name,
-            item.country_code,
-            item.phone,
-            new Date(item.created_at).toLocaleString(),
-          ]
+        ? [i + 1, item.name, item.country_code, item.phone, item.nakshatra,
+           new Date(item.created_at).toLocaleString()]
+        : [i + 1, item.name, item.country_code, item.phone,
+           new Date(item.created_at).toLocaleString()]
     );
 
     autoTable(doc, { head: [headers], body: rows });
@@ -195,14 +191,8 @@ function NakshatraTable({ type = "devotees" }) {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
 
-    const csv = XLSX.write(workbook, {
-      bookType: "csv",
-      type: "array",
-    });
-
-    const blob = new Blob([csv], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const csv = XLSX.write(workbook, { bookType: "csv", type: "array" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 
     saveAs(blob, "data.csv");
   };
@@ -210,7 +200,6 @@ function NakshatraTable({ type = "devotees" }) {
   return (
     <div className="table-container">
 
-      {/* HEADER */}
       <div className="table-header">
         <h2>
           {isDuplicatePage
@@ -223,13 +212,10 @@ function NakshatraTable({ type = "devotees" }) {
         <div className="header-buttons">
           <button onClick={downloadPDF}>Download PDF</button>
           <button onClick={downloadCSV}>Download CSV</button>
-          <button onClick={() => setShowConfirmPopup(true)}>
-            Delete All
-          </button>
+          <button onClick={() => setShowConfirmPopup(true)}>Delete All</button>
         </div>
       </div>
 
-      {/* SEARCH */}
       <div className="search-box">
         <input
           type="text"
@@ -239,7 +225,6 @@ function NakshatraTable({ type = "devotees" }) {
         />
       </div>
 
-      {/* DUPLICATE FILTER */}
       {isDuplicatePage && (
         <div className="filter-box">
           <select
@@ -248,15 +233,12 @@ function NakshatraTable({ type = "devotees" }) {
           >
             <option value="">All Nakshatras</option>
             {[...new Set(data.map((d) => d.nakshatra))].map((nak) => (
-              <option key={nak} value={nak}>
-                {nak}
-              </option>
+              <option key={nak} value={nak}>{nak}</option>
             ))}
           </select>
         </div>
       )}
 
-      {/* TABLE */}
       <div className="table-wrapper">
         {fetchLoading ? (
           <div>Loading...</div>
@@ -280,7 +262,6 @@ function NakshatraTable({ type = "devotees" }) {
                 <tr key={item.id}>
                   <td>{i + 1}</td>
 
-                  {/* NAME */}
                   <td>
                     {editingId === item.id ? (
                       <input
@@ -292,46 +273,12 @@ function NakshatraTable({ type = "devotees" }) {
                           })
                         }
                       />
-                    ) : (
-                      item.name
-                    )}
+                    ) : item.name}
                   </td>
 
-                  {/* COUNTRY */}
-                  <td>
-                    {editingId === item.id ? (
-                      <input
-                        value={editData.country_code}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            country_code: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      item.country_code
-                    )}
-                  </td>
+                  <td>{item.country_code}</td>
+                  <td>{item.phone}</td>
 
-                  {/* PHONE */}
-                  <td>
-                    {editingId === item.id ? (
-                      <input
-                        value={editData.phone}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            phone: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      item.phone
-                    )}
-                  </td>
-
-                  {/* NAKSHATRA */}
                   {(isDuplicatePage || isInvalidPage) && (
                     <td>
                       {editingId === item.id && isInvalidPage ? (
@@ -346,14 +293,10 @@ function NakshatraTable({ type = "devotees" }) {
                         >
                           <option value="">Select</option>
                           {NAKSHATRA_OPTIONS.map((nak) => (
-                            <option key={nak} value={nak}>
-                              {nak}
-                            </option>
+                            <option key={nak} value={nak}>{nak}</option>
                           ))}
                         </select>
-                      ) : (
-                        item.nakshatra
-                      )}
+                      ) : item.nakshatra}
                     </td>
                   )}
 
@@ -404,7 +347,6 @@ function NakshatraTable({ type = "devotees" }) {
         )}
       </div>
 
-      {/* CONFIRM POPUP */}
       {showConfirmPopup && (
         <div className="popup-overlay">
           <div className="popup-card">

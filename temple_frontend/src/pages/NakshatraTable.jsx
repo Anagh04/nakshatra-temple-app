@@ -13,6 +13,7 @@ function NakshatraTable({ type = "devotees" }) {
 
   const [data, setData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedNakshatra, setSelectedNakshatra] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -26,7 +27,6 @@ function NakshatraTable({ type = "devotees" }) {
   // ================= FETCH =================
   const fetchData = async () => {
     setFetchLoading(true);
-
     try {
       let endpoint = "";
 
@@ -49,11 +49,16 @@ function NakshatraTable({ type = "devotees" }) {
   }, [nakshatraName, type]);
 
   // ================= FILTER =================
-  const filteredData = data.filter(
-    (item) =>
+  const filteredData = data.filter((item) => {
+    const matchesSearch =
       item.name?.toUpperCase().includes(searchTerm.toUpperCase()) ||
-      item.phone?.includes(searchTerm)
-  );
+      item.phone?.includes(searchTerm);
+
+    const matchesNakshatra =
+      !selectedNakshatra || item.nakshatra === selectedNakshatra;
+
+    return matchesSearch && matchesNakshatra;
+  });
 
   // ================= EDIT =================
   const startEdit = (item) => {
@@ -113,9 +118,7 @@ function NakshatraTable({ type = "devotees" }) {
       await API.delete("delete-all-invalids/");
     else
       await API.delete(
-        `delete-nakshatra/${encodeURIComponent(
-          nakshatraName
-        )}/`
+        `delete-nakshatra/${encodeURIComponent(nakshatraName)}/`
       );
 
     setShowConfirmPopup(false);
@@ -185,6 +188,7 @@ function NakshatraTable({ type = "devotees" }) {
 
   return (
     <div className="table-container">
+      {/* HEADER */}
       <div className="table-header">
         <h2>
           {isDuplicatePage
@@ -205,15 +209,24 @@ function NakshatraTable({ type = "devotees" }) {
             className="delete-nakshatra-btn"
             onClick={() => setShowConfirmPopup(true)}
           >
-            {isDuplicatePage
-              ? "Delete All Duplicates"
-              : isInvalidPage
-              ? "Delete All Invalids"
-              : "Delete Table"}
+            Delete All
           </button>
         </div>
       </div>
 
+      {/* SUMMARY CARDS */}
+      <div className="summary-cards">
+        <div className="card">
+          <h4>Total</h4>
+          <p>{data.length}</p>
+        </div>
+        <div className="card">
+          <h4>Showing</h4>
+          <p>{filteredData.length}</p>
+        </div>
+      </div>
+
+      {/* SEARCH */}
       <div className="search-box">
         <input
           type="text"
@@ -223,6 +236,24 @@ function NakshatraTable({ type = "devotees" }) {
         />
       </div>
 
+      {/* DUPLICATE FILTER */}
+      {isDuplicatePage && (
+        <div className="filter-box">
+          <select
+            value={selectedNakshatra}
+            onChange={(e) => setSelectedNakshatra(e.target.value)}
+          >
+            <option value="">All Nakshatras</option>
+            {[...new Set(data.map((d) => d.nakshatra))].map((nak) => (
+              <option key={nak} value={nak}>
+                {nak}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* TABLE */}
       <div className="table-wrapper">
         {fetchLoading ? (
           <div className="no-data">Loading...</div>
@@ -234,8 +265,7 @@ function NakshatraTable({ type = "devotees" }) {
                 <th>Name</th>
                 <th>Country Code</th>
                 <th>Phone</th>
-                {isDuplicatePage && <th>Nakshatra</th>}
-                {isInvalidPage && <th>Nakshatra</th>}
+                {(isDuplicatePage || isInvalidPage) && <th>Nakshatra</th>}
                 {isInvalidPage && <th>Reason</th>}
                 {!isInvalidPage && <th>Date & Time</th>}
                 <th>Action</th>
@@ -254,7 +284,7 @@ function NakshatraTable({ type = "devotees" }) {
                         onChange={(e) =>
                           setEditData({
                             ...editData,
-                            name: e.target.value,
+                            name: e.target.value.toUpperCase(),
                           })
                         }
                       />
@@ -263,119 +293,30 @@ function NakshatraTable({ type = "devotees" }) {
                     )}
                   </td>
 
-                  <td>
-                    {editingId === item.id ? (
-                      <input
-                        value={editData.country_code}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            country_code: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      item.country_code
-                    )}
-                  </td>
+                  <td>{item.country_code}</td>
+                  <td>{item.phone}</td>
 
-                  <td>
-                    {editingId === item.id ? (
-                      <input
-                        value={editData.phone}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            phone: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      item.phone
-                    )}
-                  </td>
-
-                  {isDuplicatePage && (
+                  {(isDuplicatePage || isInvalidPage) && (
                     <td>{item.nakshatra}</td>
                   )}
 
-                  {isInvalidPage && (
-                    <>
-                      <td>
-                        {editingId === item.id ? (
-                          <input
-                            value={editData.nakshatra}
-                            onChange={(e) =>
-                              setEditData({
-                                ...editData,
-                                nakshatra: e.target.value,
-                              })
-                            }
-                          />
-                        ) : (
-                          item.nakshatra
-                        )}
-                      </td>
-                      <td>{item.reason}</td>
-                    </>
-                  )}
+                  {isInvalidPage && <td>{item.reason}</td>}
 
                   {!isInvalidPage && (
                     <td>
                       {item.created_at
-                        ? new Date(
-                            item.created_at
-                          ).toLocaleString()
+                        ? new Date(item.created_at).toLocaleString()
                         : "-"}
                     </td>
                   )}
 
                   <td>
-                    {editingId === item.id ? (
-                      <>
-                        {isInvalidPage ? (
-                          <button
-                            onClick={() =>
-                              handleConvert(item.id)
-                            }
-                          >
-                            Save & Convert
-                          </button>
-                        ) : (
-                          isDevoteePage && (
-                            <button
-                              onClick={() =>
-                                handleUpdate(item.id)
-                              }
-                            >
-                              Save
-                            </button>
-                          )
-                        )}
-                        <button onClick={cancelEdit}>
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {(isDevoteePage || isInvalidPage) && (
-                          <button
-                            onClick={() =>
-                              startEdit(item)
-                            }
-                          >
-                            Edit
-                          </button>
-                        )}
-                        <button
-                          onClick={() =>
-                            handleDelete(item.id)
-                          }
-                        >
-                          Delete
-                        </button>
-                      </>
+                    {(isDevoteePage || isInvalidPage) && (
+                      <button onClick={() => startEdit(item)}>Edit</button>
                     )}
+                    <button onClick={() => handleDelete(item.id)}>
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -384,13 +325,12 @@ function NakshatraTable({ type = "devotees" }) {
         )}
       </div>
 
+      {/* CONFIRM POPUP */}
       {showConfirmPopup && (
         <div className="popup-overlay">
           <div className="popup-card">
             <h3>Are you sure?</h3>
-            <button
-              onClick={() => setShowConfirmPopup(false)}
-            >
+            <button onClick={() => setShowConfirmPopup(false)}>
               Cancel
             </button>
             <button onClick={handleDeleteAll}>

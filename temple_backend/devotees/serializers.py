@@ -11,9 +11,8 @@ def normalize_string(value):
     Normalize string for safe comparison:
     - lowercase
     - remove spaces
-    - remove common phonetic variations
+    - normalize phonetic variations
     """
-
     value = value.strip().lower()
     value = value.replace(" ", "")
     value = value.replace("sh", "s")
@@ -23,7 +22,7 @@ def normalize_string(value):
 
 
 # ============================================================
-# DEVOTEE SERIALIZER
+# 🌟 DEVOTEE SERIALIZER
 # ============================================================
 
 class DevoteeSerializer(serializers.ModelSerializer):
@@ -33,31 +32,9 @@ class DevoteeSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ["created_at"]
 
-        extra_kwargs = {
-            "name": {
-                "error_messages": {
-                    "blank": "Name is required.",
-                    "required": "Name is required."
-                }
-            },
-            "phone": {
-                "error_messages": {
-                    "blank": "Phone number is required.",
-                    "required": "Phone number is required."
-                }
-            },
-            "nakshatra": {
-                "error_messages": {
-                    "blank": "Nakshatra is required.",
-                    "required": "Nakshatra is required."
-                }
-            }
-        }
-
     # ------------------------------
-    # FIELD VALIDATIONS
+    # NAME VALIDATION
     # ------------------------------
-
     def validate_name(self, value):
         value = value.strip()
 
@@ -66,6 +43,9 @@ class DevoteeSerializer(serializers.ModelSerializer):
 
         return value.upper()
 
+    # ------------------------------
+    # PHONE VALIDATION
+    # ------------------------------
     def validate_phone(self, value):
         value = value.strip()
 
@@ -81,6 +61,9 @@ class DevoteeSerializer(serializers.ModelSerializer):
 
         return value
 
+    # ------------------------------
+    # COUNTRY CODE VALIDATION
+    # ------------------------------
     def validate_country_code(self, value):
         value = value.strip()
 
@@ -92,9 +75,8 @@ class DevoteeSerializer(serializers.ModelSerializer):
         return value
 
     # ------------------------------
-    # SMART NAKSHATRA MATCHING
+    # SMART NAKSHATRA VALIDATION
     # ------------------------------
-
     def validate_nakshatra(self, value):
 
         input_normalized = normalize_string(value)
@@ -114,15 +96,30 @@ class DevoteeSerializer(serializers.ModelSerializer):
         return normalized_map[input_normalized]
 
     # ------------------------------
-    # DUPLICATE PROTECTION
+    # DUPLICATE PROTECTION (SAFE FOR UPDATE)
     # ------------------------------
-
     def validate(self, data):
 
-        name = data.get("name")
-        phone = data.get("phone")
-        country_code = data.get("country_code")
-        nakshatra = data.get("nakshatra")
+        name = data.get(
+            "name",
+            self.instance.name if self.instance else None
+        )
+        phone = data.get(
+            "phone",
+            self.instance.phone if self.instance else None
+        )
+        country_code = data.get(
+            "country_code",
+            self.instance.country_code if self.instance else None
+        )
+        nakshatra = data.get(
+            "nakshatra",
+            self.instance.nakshatra if self.instance else None
+        )
+
+        # If any field missing, skip duplicate check
+        if not all([name, phone, country_code, nakshatra]):
+            return data
 
         queryset = Devotee.objects.filter(
             name=name,
@@ -143,20 +140,22 @@ class DevoteeSerializer(serializers.ModelSerializer):
 
 
 # ============================================================
-# DUPLICATE ENTRY SERIALIZER
+# 🔁 DUPLICATE ENTRY SERIALIZER
 # ============================================================
 
 class DuplicateEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = DuplicateEntry
         fields = "__all__"
+        read_only_fields = ["created_at"]
 
 
 # ============================================================
-# INVALID ENTRY SERIALIZER
+# ❌ INVALID ENTRY SERIALIZER
 # ============================================================
 
 class InvalidEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = InvalidEntry
         fields = "__all__"
+        read_only_fields = ["created_at"]

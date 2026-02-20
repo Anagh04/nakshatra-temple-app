@@ -34,7 +34,6 @@ function NakshatraTable({ type = "devotees" }) {
   const isInvalidPage = type === "invalids";
   const isDevoteePage = !isDuplicatePage && !isInvalidPage;
 
-  // ================= FETCH =================
   const fetchData = async () => {
     setFetchLoading(true);
     try {
@@ -56,7 +55,6 @@ function NakshatraTable({ type = "devotees" }) {
     fetchData();
   }, [nakshatraName, type]);
 
-  // ================= FILTER + SORT =================
   const filteredData = useMemo(() => {
 
     let filtered = data.filter((item) => {
@@ -92,7 +90,6 @@ function NakshatraTable({ type = "devotees" }) {
 
   }, [data, searchTerm, selectedNakshatra, sortField, sortOrder]);
 
-  // ================= DELETE ALL =================
   const handleDeleteAll = async () => {
     if (!window.confirm("Delete all records?")) return;
 
@@ -110,7 +107,6 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
-  // ================= PDF =================
   const downloadPDF = () => {
     const doc = new jsPDF();
 
@@ -131,7 +127,6 @@ function NakshatraTable({ type = "devotees" }) {
     toast.success("PDF downloaded");
   };
 
-  // ================= CSV =================
   const downloadCSV = () => {
     const worksheet = XLSX.utils.json_to_sheet(filteredData);
     const workbook = XLSX.utils.book_new();
@@ -144,7 +139,6 @@ function NakshatraTable({ type = "devotees" }) {
     toast.success("CSV downloaded");
   };
 
-  // ================= EDIT =================
   const startEdit = (item) => {
     setEditingId(item.id);
     setEditData({ ...item });
@@ -169,7 +163,6 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
-  // ================= CONVERT INVALID =================
   const handleConvert = async (id) => {
     try {
       await API.post("devotees/", {
@@ -216,7 +209,6 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
-  // ================= DELETE SINGLE =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this entry?")) return;
 
@@ -245,7 +237,6 @@ function NakshatraTable({ type = "devotees" }) {
           : `${nakshatraName} Nakshatra`}
       </h2>
 
-      {/* CONTROLS */}
       <div className="controls">
 
         <input
@@ -277,12 +268,11 @@ function NakshatraTable({ type = "devotees" }) {
           <option value="asc">Ascending</option>
         </select>
 
-        <button onClick={downloadPDF}>PDF</button>
-        <button onClick={downloadCSV}>CSV</button>
-        <button onClick={handleDeleteAll}>Delete All</button>
+        <button className="btn pdf-btn" onClick={downloadPDF}>PDF</button>
+        <button className="btn csv-btn" onClick={downloadCSV}>CSV</button>
+        <button className="btn delete-btn" onClick={handleDeleteAll}>Delete All</button>
       </div>
 
-      {/* TABLE */}
       {fetchLoading ? (
         <p>Loading...</p>
       ) : (
@@ -384,22 +374,28 @@ function NakshatraTable({ type = "devotees" }) {
                   {editingId === item.id ? (
                     <>
                       {isInvalidPage ? (
-                        <button onClick={() => handleConvert(item.id)}>
+                        <button className="btn convert-btn" onClick={() => handleConvert(item.id)}>
                           Convert
                         </button>
                       ) : (
-                        <button onClick={() => handleUpdate(item.id)}>
+                        <button className="btn save-btn" onClick={() => handleUpdate(item.id)}>
                           Save
                         </button>
                       )}
-                      <button onClick={cancelEdit}>Cancel</button>
+                      <button className="btn cancel-btn" onClick={cancelEdit}>
+                        Cancel
+                      </button>
                     </>
                   ) : (
                     <>
                       {!isDuplicatePage && (
-                        <button onClick={() => startEdit(item)}>Edit</button>
+                        <button className="btn edit-btn" onClick={() => startEdit(item)}>
+                          Edit
+                        </button>
                       )}
-                      <button onClick={() => handleDelete(item.id)}>Delete</button>
+                      <button className="btn delete-btn" onClick={() => handleDelete(item.id)}>
+                        Delete
+                      </button>
                     </>
                   )}
                 </td>

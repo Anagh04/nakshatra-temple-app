@@ -3,22 +3,16 @@ from .models import Devotee, DuplicateEntry, InvalidEntry
 
 
 # ============================================================
-# 🔥 SMART NORMALIZATION FUNCTION
+# 🔥 SAFE NORMALIZATION FUNCTION
 # ============================================================
 
 def normalize_string(value):
     """
-    Normalize string for safe comparison:
+    Normalize string safely:
     - lowercase
-    - remove spaces
-    - normalize phonetic variations
+    - remove spaces only
     """
-    value = value.strip().lower()
-    value = value.replace(" ", "")
-    value = value.replace("sh", "s")
-    value = value.replace("oo", "u")
-    value = value.replace("aa", "a")
-    return value
+    return value.strip().lower().replace(" ", "")
 
 
 # ============================================================
@@ -81,17 +75,17 @@ class DevoteeSerializer(serializers.ModelSerializer):
 
         input_normalized = normalize_string(value)
 
-        # Build normalized map dynamically from model
+        # Build normalized map dynamically from model choices
         normalized_map = {
             normalize_string(choice[0]): choice[0].upper()
             for choice in Devotee.NAKSHATRA_CHOICES
         }
 
-        # Direct match
+        # ✅ Direct match
         if input_normalized in normalized_map:
             return normalized_map[input_normalized]
 
-        # Smart phonetic fallback
+        # ✅ Smart phonetic fallback
         for key, original in normalized_map.items():
 
             # thi <-> thy
@@ -100,16 +94,10 @@ class DevoteeSerializer(serializers.ModelSerializer):
             if input_normalized.replace("thy", "thi") == key:
                 return original
 
-            # ra <-> raa
-            if input_normalized.replace("ra", "raa") == key:
+            # bh <-> b
+            if input_normalized.replace("bh", "b") == key:
                 return original
-            if input_normalized.replace("raa", "ra") == key:
-                return original
-
-            # ya <-> y
-            if input_normalized.replace("ya", "y") == key:
-                return original
-            if input_normalized.replace("y", "ya") == key:
+            if input_normalized.replace("b", "bh") == key:
                 return original
 
         raise serializers.ValidationError("Invalid Nakshatra selected.")
@@ -136,7 +124,7 @@ class DevoteeSerializer(serializers.ModelSerializer):
             self.instance.nakshatra if self.instance else None
         )
 
-        # If any field missing, skip duplicate check
+        # Skip duplicate check if missing any field
         if not all([name, phone, country_code, nakshatra]):
             return data
 

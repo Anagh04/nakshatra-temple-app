@@ -20,14 +20,14 @@ function AddDevotee() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ CORRECTED SPELLINGS (MATCH BACKEND EXACTLY)
   const nakshatras = [
-    "Aswathy","Bharani","Karthika","Rohini","Makayiram","Thiruvathira",
-    "Punartham","Pooyam","Ayilyam","Makam","Pooram",
-    "Uthram","Atham","Chithria","Chothi","Vishakham",
-    "Anizham","Thrikketta","Moolam","Pooradam",
-    "Uthradam","Thiruvonam","Avittam",
-    "Chathayam","Pooruruttathi",
-    "Uthruttathi","Revathi"
+    "ASWATHY","BHARANI","KARTHIKA","ROHINI","MAKAYIRAM",
+    "THIRUVATHIRA","PUNARTHAM","POOYAM","AYILYAM","MAKAM",
+    "POORAM","UTHRAM","ATHAM","CHITHIRA","CHOTHI",
+    "VISHAKHAM","ANIZHAM","THRIKKETTA","MOOLAM",
+    "POORADAM","UTHRADAM","THIRUVONAM","AVITTAM",
+    "CHATHAYAM","POORURUTTATHI","UTHRUTTATHI","REVATHI"
   ];
 
   // ================= AUTO HIDE SUCCESS =================
@@ -61,13 +61,18 @@ function AddDevotee() {
     }));
   };
 
-  // ================= SINGLE ENTRY SUBMIT =================
+  // ================= SINGLE ENTRY =================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    if (!formData.name || !formData.phone || !formData.nakshatra) {
+    if (
+      !formData.name ||
+      !formData.phone ||
+      !formData.country_code ||
+      !formData.nakshatra
+    ) {
       setError("All fields are required");
       return;
     }
@@ -75,13 +80,14 @@ function AddDevotee() {
     setLoading(true);
 
     try {
-      const response = await API.post("devotees/", {
-        ...formData,
+      await API.post("devotees/", {
         name: formData.name.toUpperCase(),
+        country_code: formData.country_code,
+        phone: formData.phone,
         nakshatra: formData.nakshatra.toUpperCase(),
       });
 
-      setSuccess(response.data.message || "Devotee added successfully!");
+      setSuccess("Devotee added successfully!");
 
       setFormData({
         name: "",
@@ -91,22 +97,22 @@ function AddDevotee() {
       });
 
     } catch (error) {
-      let message = "Error adding devotee";
-
       if (error.response?.data) {
         const data = error.response.data;
 
-        if (data.duplicate) message = data.duplicate;
-        else if (data.error) message = data.error;
+        if (data.duplicate) setError(data.duplicate);
+        else if (data.error) setError(data.error);
         else {
           const firstKey = Object.keys(data)[0];
-          message = Array.isArray(data[firstKey])
-            ? data[firstKey][0]
-            : data[firstKey];
+          setError(
+            Array.isArray(data[firstKey])
+              ? data[firstKey][0]
+              : data[firstKey]
+          );
         }
+      } else {
+        setError("Error adding devotee");
       }
-
-      setError(message);
     } finally {
       setLoading(false);
     }
@@ -130,13 +136,9 @@ function AddDevotee() {
     try {
       const response = await API.post("bulk-upload/", data);
 
-      // 🔥 Redirect to Nakshatras page with row data
-      navigate("/nakshatras", {
-        state: {
-          duplicateRows: response.data.duplicate_rows || [],
-          invalidRows: response.data.invalid_rows || [],
-        },
-      });
+      setSuccess(
+        `Created: ${response.data.created} | Duplicates: ${response.data.duplicates} | Invalid: ${response.data.invalid}`
+      );
 
       setSelectedFile(null);
 
@@ -217,7 +219,7 @@ function AddDevotee() {
             >
               <option value="">Select Nakshatra</option>
               {nakshatras.map((n, index) => (
-                <option key={index} value={n.toUpperCase()}>
+                <option key={index} value={n}>
                   {n}
                 </option>
               ))}

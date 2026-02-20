@@ -7,12 +7,13 @@ import { saveAs } from "file-saver";
 import API from "../services/api";
 import "./NakshatraTable.css";
 
+/* ✅ MATCHES BACKEND EXACTLY */
 const NAKSHATRA_OPTIONS = [
-  "ASHWATHY","BHARANI","KARTHIKA","ROHINI","MAKAYIRAM","THIRUVATHIRA",
+  "ASWATHY","BHARANI","KARTHIKA","ROHINI","MAKAYIRAM","THIRUVATHIRA",
   "PUNARTHAM","POOYAM","AYILYAM","MAKAM","POORAM","UTHRAM",
-  "ATHAM","CHITHIRA","CHOTHI","VISHAKAM","ANIZHAM","THRIKKETTA",
+  "ATHAM","CHITHIRA","CHOTHI","VISHAKHAM","ANIZHAM","THRIKKETTA",
   "MOOLAM","POORADAM","UTHRADAM","THIRUVONAM","AVITTAM","CHATHAYAM",
-  "POORURUTTATHI","UTHRATTATHI","REVATHI"
+  "POORURUTTATHI","UTHRUTTATHI","REVATHI"
 ];
 
 function NakshatraTable({ type = "devotees" }) {
@@ -62,10 +63,10 @@ function NakshatraTable({ type = "devotees" }) {
       item.name?.toUpperCase().includes(searchTerm.toUpperCase()) ||
       item.phone?.includes(searchTerm);
 
-    const matchesNakshatra =
+    const matchesNak =
       !selectedNakshatra || item.nakshatra === selectedNakshatra;
 
-    return matchesSearch && matchesNakshatra;
+    return matchesSearch && matchesNak;
   });
 
   // ================= EDIT =================
@@ -112,22 +113,22 @@ function NakshatraTable({ type = "devotees" }) {
       return;
     }
 
-    const finalNakshatra = editData.nakshatra.toUpperCase();
+    const finalNak = editData.nakshatra.toUpperCase();
 
     try {
       await API.post("devotees/", {
         name: editData.name.toUpperCase(),
         country_code: editData.country_code,
         phone: editData.phone,
-        nakshatra: finalNakshatra,
+        nakshatra: finalNak,
       });
 
       await API.delete(`invalids/${id}/`);
 
       cancelEdit();
 
-      // 🔥 Redirect to correct Nakshatra page
-      navigate(`/nakshatras/${finalNakshatra}`);
+      // ✅ Redirect to correct Nakshatra page
+      navigate(`/nakshatras/${finalNak}`);
 
     } catch (err) {
       alert("Conversion failed");
@@ -200,6 +201,7 @@ function NakshatraTable({ type = "devotees" }) {
   return (
     <div className="table-container">
 
+      {/* HEADER */}
       <div className="table-header">
         <h2>
           {isDuplicatePage
@@ -216,6 +218,7 @@ function NakshatraTable({ type = "devotees" }) {
         </div>
       </div>
 
+      {/* SEARCH (UNCHANGED) */}
       <div className="search-box">
         <input
           type="text"
@@ -225,6 +228,7 @@ function NakshatraTable({ type = "devotees" }) {
         />
       </div>
 
+      {/* DUPLICATE FILTER */}
       {isDuplicatePage && (
         <div className="filter-box">
           <select
@@ -239,6 +243,7 @@ function NakshatraTable({ type = "devotees" }) {
         </div>
       )}
 
+      {/* TABLE */}
       <div className="table-wrapper">
         {fetchLoading ? (
           <div>Loading...</div>

@@ -81,19 +81,38 @@ class DevoteeSerializer(serializers.ModelSerializer):
 
         input_normalized = normalize_string(value)
 
-        valid_choices = Devotee.NAKSHATRA_CHOICES
-
+        # Build normalized map dynamically from model
         normalized_map = {
             normalize_string(choice[0]): choice[0].upper()
-            for choice in valid_choices
+            for choice in Devotee.NAKSHATRA_CHOICES
         }
 
-        if input_normalized not in normalized_map:
-            raise serializers.ValidationError(
-                "Invalid Nakshatra selected."
-            )
+        # Direct match
+        if input_normalized in normalized_map:
+            return normalized_map[input_normalized]
 
-        return normalized_map[input_normalized]
+        # Smart phonetic fallback
+        for key, original in normalized_map.items():
+
+            # thi <-> thy
+            if input_normalized.replace("thi", "thy") == key:
+                return original
+            if input_normalized.replace("thy", "thi") == key:
+                return original
+
+            # ra <-> raa
+            if input_normalized.replace("ra", "raa") == key:
+                return original
+            if input_normalized.replace("raa", "ra") == key:
+                return original
+
+            # ya <-> y
+            if input_normalized.replace("ya", "y") == key:
+                return original
+            if input_normalized.replace("y", "ya") == key:
+                return original
+
+        raise serializers.ValidationError("Invalid Nakshatra selected.")
 
     # ------------------------------
     # DUPLICATE PROTECTION (SAFE FOR UPDATE)

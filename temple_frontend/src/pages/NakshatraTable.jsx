@@ -1,5 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -7,25 +7,12 @@ import { saveAs } from "file-saver";
 import API from "../services/api";
 import "./NakshatraTable.css";
 
-/* ✅ EXACTLY MATCHES BACKEND */
-const NAKSHATRA_OPTIONS = [
-  "ASWATHY","BHARANI","KARTHIKA","ROHINI","MAKAYIRAM","THIRUVATHIRA",
-  "PUNARTHAM","POOYAM","AYILYAM","MAKAM","POORAM","UTHRAM",
-  "ATHAM","CHITHIRA","CHOTHI","VISHAKHAM","ANIZHAM","THRIKKETTA",
-  "MOOLAM","POORADAM","UTHRADAM","THIRUVONAM","AVITTAM","CHATHAYAM",
-  "POORURUTTATHI","UTHRUTTATHI","REVATHI"
-];
-
 function NakshatraTable({ type = "devotees" }) {
   const { name } = useParams();
-  const navigate = useNavigate();
   const nakshatraName = name ? name.toUpperCase() : "";
 
   const [data, setData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedNakshatra, setSelectedNakshatra] = useState("");
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({});
   const [fetchLoading, setFetchLoading] = useState(false);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -34,19 +21,28 @@ function NakshatraTable({ type = "devotees" }) {
   const isInvalidPage = type === "invalids";
   const isDevoteePage = !isDuplicatePage && !isInvalidPage;
 
-  // ================= FETCH =================
+  // ================= FETCH DATA =================
   const fetchData = async () => {
     setFetchLoading(true);
     try {
       let endpoint = "";
+
       if (isDuplicatePage) endpoint = "duplicates/";
       else if (isInvalidPage) endpoint = "invalids/";
       else endpoint = `devotees/?nakshatra=${nakshatraName}`;
 
       const response = await API.get(endpoint);
-      setData(response.data);
+
+      // Safe handling if pagination ever enabled
+      const responseData = Array.isArray(response.data)
+        ? response.data
+        : response.data.results || [];
+
+      setData(responseData);
+
     } catch (err) {
       console.error("Fetch Error:", err);
+      setData([]);
     } finally {
       setFetchLoading(false);
     }
@@ -57,88 +53,26 @@ function NakshatraTable({ type = "devotees" }) {
   }, [nakshatraName, type]);
 
   // ================= FILTER =================
-  const filteredData = data.filter((item) => {
-    const matchesSearch =
-      item.name?.toUpperCase().includes(searchTerm.toUpperCase()) ||
-      item.phone?.includes(searchTerm);
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      const matchesSearch =
+        item.name?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+        item.phone?.includes(searchTerm);
 
-    const matchesNak =
-      !selectedNakshatra || item.nakshatra === selectedNakshatra;
-
-    return matchesSearch && matchesNak;
-  });
-
-  // ================= EDIT =================
-  const startEdit = (item) => {
-    setEditingId(item.id);
-    setEditData({
-      name: item.name || "",
-      country_code: item.country_code || "",
-      phone: item.phone || "",
-      nakshatra: item.nakshatra || "",
+      return matchesSearch;
     });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditData({});
-  };
-
-  // ================= UPDATE =================
-  const handleUpdate = async (id) => {
-    try {
-      await API.put(`devotees/${id}/`, {
-        ...editData,
-        name: editData.name.toUpperCase(),
-        nakshatra: nakshatraName,
-      });
-
-      cancelEdit();
-      fetchData();
-    } catch (err) {
-      alert(err.response?.data?.duplicate || "Update failed");
-    }
-  };
-
-  // ================= CONVERT INVALID =================
-  const handleConvert = async (id) => {
-    if (
-      !editData.name ||
-      !editData.country_code ||
-      !editData.phone ||
-      !editData.nakshatra
-    ) {
-      alert("All fields are required");
-      return;
-    }
-
-    try {
-      await API.post("devotees/", {
-        name: editData.name.toUpperCase(),
-        country_code: editData.country_code,
-        phone: editData.phone,
-        nakshatra: editData.nakshatra.toUpperCase(),
-      });
-
-      await API.delete(`invalids/${id}/`);
-
-      cancelEdit();
-      fetchData();
-    } catch (err) {
-      alert(err.response?.data?.duplicate || "Conversion failed");
-    }
-  };
+  }, [data, searchTerm]);
 
   // ================= DELETE SINGLE =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this entry?")) return;
 
     try {
-      const endpoint = isDuplicatePage
-        ? `duplicates/${id}/`
-        : isInvalidPage
-        ? `invalids/${id}/`
-        : `devotees/${id}/`;
+      let endpoint = "";
+
+      if (isDuplicatePage) endpoint = `duplicates/${id}/`;
+      else if (isInvalidPage) endpoint = `invalids/${id}/`;
+      else endpoint = `devotees/${id}/`;
 
       await API.delete(endpoint);
       fetchData();
@@ -147,44 +81,27 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
-  // ================= DELETE ALL (FULLY FIXED) =================
+  // ================= DELETE ALL =================
   const handleDeleteAll = async () => {
-    if (data.length === 0) {
-      alert("No records to delete.");
-      setShowConfirmPopup(false);
-      return;
-    }
+    if (data.length === 0) return;
 
     try {
       setLoading(true);
 
       let endpoint = "";
 
-      if (isDuplicatePage) {
-        endpoint = "delete-all-duplicates/";
-      } 
-      else if (isInvalidPage) {
-        endpoint = "delete-all-invalids/";
-      } 
-      else {
-        endpoint = `delete-nakshatra/${nakshatraName}/`;
-      }
+      if (isDuplicatePage) endpoint = "delete-all-duplicates/";
+      else if (isInvalidPage) endpoint = "delete-all-invalids/";
+      else endpoint = `delete-nakshatra/${nakshatraName}/`;
 
       const response = await API.delete(endpoint);
 
-      if (response?.data?.message) {
-        alert(response.data.message);
-      }
-
-      await fetchData();
+      alert(response?.data?.message || "Deleted successfully");
+      fetchData();
       setShowConfirmPopup(false);
 
     } catch (error) {
-      console.error("Delete All Error:", error);
-      alert(
-        error.response?.data?.message ||
-        "Nothing to delete or something went wrong."
-      );
+      alert("Delete failed");
     } finally {
       setLoading(false);
     }
@@ -202,12 +119,30 @@ function NakshatraTable({ type = "devotees" }) {
 
     const rows = filteredData.map((item, i) =>
       isInvalidPage
-        ? [i + 1, item.name, item.country_code, item.phone, item.nakshatra, item.reason || "-"]
+        ? [
+            i + 1,
+            item.name,
+            item.country_code,
+            item.phone,
+            item.nakshatra,
+            item.reason || "-",
+          ]
         : isDuplicatePage
-        ? [i + 1, item.name, item.country_code, item.phone, item.nakshatra,
-           new Date(item.created_at).toLocaleString()]
-        : [i + 1, item.name, item.country_code, item.phone,
-           new Date(item.created_at).toLocaleString()]
+        ? [
+            i + 1,
+            item.name,
+            item.country_code,
+            item.phone,
+            item.nakshatra,
+            new Date(item.created_at).toLocaleString(),
+          ]
+        : [
+            i + 1,
+            item.name,
+            item.country_code,
+            item.phone,
+            new Date(item.created_at).toLocaleString(),
+          ]
     );
 
     autoTable(doc, { head: [headers], body: rows });
@@ -229,6 +164,7 @@ function NakshatraTable({ type = "devotees" }) {
   return (
     <div className="table-container">
 
+      {/* ================= HEADER ================= */}
       <div className="table-header">
         <h2>
           {isDuplicatePage
@@ -250,8 +186,64 @@ function NakshatraTable({ type = "devotees" }) {
         </div>
       </div>
 
-      {/* Rest of your table JSX remains SAME as before */}
+      {/* ================= SEARCH ================= */}
+      <input
+        type="text"
+        placeholder="Search by name or phone..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="search-input"
+      />
 
+      {/* ================= TABLE ================= */}
+      {fetchLoading ? (
+        <p>Loading...</p>
+      ) : filteredData.length === 0 ? (
+        <p>No records found.</p>
+      ) : (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Name</th>
+              <th>Country Code</th>
+              <th>Phone</th>
+              {isDevoteePage && <th>Date</th>}
+              {(isDuplicatePage || isInvalidPage) && <th>Nakshatra</th>}
+              {isInvalidPage && <th>Reason</th>}
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredData.map((item, index) => (
+              <tr key={item.id}>
+                <td>{index + 1}</td>
+                <td>{item.name}</td>
+                <td>{item.country_code}</td>
+                <td>{item.phone}</td>
+
+                {isDevoteePage && (
+                  <td>{new Date(item.created_at).toLocaleString()}</td>
+                )}
+
+                {(isDuplicatePage || isInvalidPage) && (
+                  <td>{item.nakshatra}</td>
+                )}
+
+                {isInvalidPage && <td>{item.reason}</td>}
+
+                <td>
+                  <button onClick={() => handleDelete(item.id)}>
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* ================= DELETE CONFIRM ================= */}
       {showConfirmPopup && (
         <div className="popup-overlay">
           <div className="popup-card">
@@ -259,15 +251,13 @@ function NakshatraTable({ type = "devotees" }) {
             <button onClick={() => setShowConfirmPopup(false)}>
               Cancel
             </button>
-            <button
-              onClick={handleDeleteAll}
-              disabled={loading}
-            >
+            <button onClick={handleDeleteAll} disabled={loading}>
               {loading ? "Deleting..." : "Confirm Delete"}
             </button>
           </div>
         </div>
       )}
+
     </div>
   );
 }

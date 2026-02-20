@@ -73,9 +73,9 @@ function NakshatraTable({ type = "devotees" }) {
   const startEdit = (item) => {
     setEditingId(item.id);
     setEditData({
-      name: item.name,
-      country_code: item.country_code,
-      phone: item.phone,
+      name: item.name || "",
+      country_code: item.country_code || "",
+      phone: item.phone || "",
       nakshatra: item.nakshatra || "",
     });
   };
@@ -97,7 +97,7 @@ function NakshatraTable({ type = "devotees" }) {
       cancelEdit();
       fetchData();
     } catch (err) {
-      alert("Update failed");
+      alert(err.response?.data?.duplicate || "Update failed");
     }
   };
 
@@ -126,16 +126,13 @@ function NakshatraTable({ type = "devotees" }) {
       await API.delete(`invalids/${id}/`);
 
       cancelEdit();
-
-      // ✅ Redirect to correct Nakshatra page
       navigate(`/nakshatras/${finalNak}`);
-
     } catch (err) {
-      alert("Conversion failed");
+      alert(err.response?.data?.duplicate || "Conversion failed");
     }
   };
 
-  // ================= DELETE SINGLE =================
+  // ================= DELETE =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this entry?")) return;
 
@@ -149,7 +146,6 @@ function NakshatraTable({ type = "devotees" }) {
     fetchData();
   };
 
-  // ================= DELETE ALL =================
   const handleDeleteAll = async () => {
     setLoading(true);
 
@@ -174,7 +170,7 @@ function NakshatraTable({ type = "devotees" }) {
 
     const rows = filteredData.map((item, i) =>
       isInvalidPage
-        ? [i + 1, item.name, item.country_code, item.phone, item.nakshatra, item.reason]
+        ? [i + 1, item.name, item.country_code, item.phone, item.nakshatra, item.reason || "-"]
         : isDuplicatePage
         ? [i + 1, item.name, item.country_code, item.phone, item.nakshatra,
            new Date(item.created_at).toLocaleString()]
@@ -201,7 +197,6 @@ function NakshatraTable({ type = "devotees" }) {
   return (
     <div className="table-container">
 
-      {/* HEADER */}
       <div className="table-header">
         <h2>
           {isDuplicatePage
@@ -218,7 +213,7 @@ function NakshatraTable({ type = "devotees" }) {
         </div>
       </div>
 
-      {/* SEARCH (UNCHANGED) */}
+      {/* SEARCH - UNCHANGED */}
       <div className="search-box">
         <input
           type="text"
@@ -243,7 +238,6 @@ function NakshatraTable({ type = "devotees" }) {
         </div>
       )}
 
-      {/* TABLE */}
       <div className="table-wrapper">
         {fetchLoading ? (
           <div>Loading...</div>
@@ -257,7 +251,7 @@ function NakshatraTable({ type = "devotees" }) {
                 <th>Phone</th>
                 {(isDuplicatePage || isInvalidPage) && <th>Nakshatra</th>}
                 {isInvalidPage && <th>Reason</th>}
-                {!isInvalidPage && <th>Date & Time</th>}
+                {isDevoteePage && <th>Date & Time</th>}
                 <th>Action</th>
               </tr>
             </thead>
@@ -305,9 +299,9 @@ function NakshatraTable({ type = "devotees" }) {
                     </td>
                   )}
 
-                  {isInvalidPage && <td>{item.reason}</td>}
+                  {isInvalidPage && <td>{item.reason || "-"}</td>}
 
-                  {!isInvalidPage && (
+                  {isDevoteePage && (
                     <td>
                       {item.created_at
                         ? new Date(item.created_at).toLocaleString()

@@ -171,50 +171,53 @@ function NakshatraTable({ type = "devotees" }) {
 
   // ================= CONVERT INVALID =================
   const handleConvert = async (id) => {
+  try {
+    await API.post("devotees/", {
+      name: editData.name.toUpperCase(),
+      country_code: editData.country_code,
+      phone: editData.phone,
+      nakshatra: editData.nakshatra.toUpperCase(),
+    });
 
-    try {
-      // Try to convert to valid devotee
-      await API.post("devotees/", {
-        name: editData.name.toUpperCase(),
-        country_code: editData.country_code,
-        phone: editData.phone,
-        nakshatra: editData.nakshatra.toUpperCase(),
-      });
+    await API.delete(`invalids/${id}/`);
 
-      await API.delete(`invalids/${id}/`);
+    toast.success("Converted to valid devotee");
+    cancelEdit();
+    fetchData();
 
-      toast.success("Converted to valid devotee");
-      cancelEdit();
-      fetchData();
+  } catch (error) {
 
-    } catch (error) {
+    const errorData = error.response?.data;
 
-      // If duplicate
-      if (error.response?.data?.duplicate) {
+    const isDuplicate =
+      errorData?.duplicate ||
+      errorData?.non_field_errors ||
+      errorData?.detail;
 
-        try {
-          await API.post("duplicates/", {
-            name: editData.name.toUpperCase(),
-            country_code: editData.country_code,
-            phone: editData.phone,
-            nakshatra: editData.nakshatra.toUpperCase(),
-          });
+    if (isDuplicate) {
+      try {
+        await API.post("duplicates/", {
+          name: editData.name.toUpperCase(),
+          country_code: editData.country_code,
+          phone: editData.phone,
+          nakshatra: editData.nakshatra.toUpperCase(),
+        });
 
-          await API.delete(`invalids/${id}/`);
+        await API.delete(`invalids/${id}/`);
 
-          toast.warning("Already exists. Moved to duplicate list.");
-          cancelEdit();
-          fetchData();
+        toast.warning("Already exists. Moved to duplicate list.");
+        cancelEdit();
+        fetchData();
 
-        } catch {
-          toast.error("Failed to move to duplicate list");
-        }
-
-      } else {
-        toast.error("Conversion failed");
+      } catch {
+        toast.error("Failed to move to duplicate list");
       }
+
+    } else {
+      toast.error("Conversion failed");
     }
-  };
+  }
+};
 
   // ================= DELETE SINGLE =================
   const handleDelete = async (id) => {

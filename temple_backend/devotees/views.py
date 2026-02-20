@@ -258,7 +258,7 @@ def bulk_upload(request):
 
 
 # ============================================================
-# DELETE ALL DEVOTEES UNDER A NAKSHATRA
+# DELETE ALL DEVOTEES UNDER A NAKSHATRA (FIXED SAFE VERSION)
 # ============================================================
 
 @api_view(["DELETE"])
@@ -270,14 +270,18 @@ def delete_nakshatra_data(request, nakshatra_name):
     nakshatra_name = nakshatra_name.upper()
 
     devotees = Devotee.objects.filter(nakshatra=nakshatra_name)
+    deleted_count = devotees.count()
 
-    if not devotees.exists():
+    # ✅ Return 200 even if nothing found
+    if deleted_count == 0:
         return Response(
-            {"message": "No devotees found"},
-            status=status.HTTP_404_NOT_FOUND,
+            {
+                "message": "No devotees found to delete",
+                "deleted": 0,
+            },
+            status=status.HTTP_200_OK,
         )
 
-    deleted_count = devotees.count()
     devotees.delete()
 
     return Response(
@@ -290,7 +294,7 @@ def delete_nakshatra_data(request, nakshatra_name):
 
 
 # ============================================================
-# DELETE ALL DUPLICATES (NEW FAST API)
+# DELETE ALL DUPLICATES
 # ============================================================
 
 @api_view(["DELETE"])
@@ -310,7 +314,7 @@ def delete_all_duplicates(request):
 
 
 # ============================================================
-# DELETE ALL INVALIDS (NEW FAST API)
+# DELETE ALL INVALIDS
 # ============================================================
 
 @api_view(["DELETE"])

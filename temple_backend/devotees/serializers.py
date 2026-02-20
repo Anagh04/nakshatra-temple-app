@@ -69,23 +69,13 @@ class DevoteeSerializer(serializers.ModelSerializer):
         return value
 
     # ------------------------------
-    # ✅ CORRECT & STABLE NAKSHATRA VALIDATION
+    # ✅ FIXED & STABLE NAKSHATRA VALIDATION
     # ------------------------------
     def validate_nakshatra(self, value):
 
         input_normalized = normalize_string(value)
 
-        # Build normalized map dynamically from model choices
-        normalized_map = {
-            normalize_string(choice[0]): choice[0].upper()
-            for choice in Devotee.NAKSHATRA_CHOICES
-        }
-
-        # 1️⃣ Direct match
-        if input_normalized in normalized_map:
-            return normalized_map[input_normalized]
-
-        # 2️⃣ Explicit safe synonym handling
+        # 🔹 Explicit synonym handling FIRST (most important)
         synonym_map = {
             # ASWATHY variations
             "aswathi": "ASWATHY",
@@ -98,6 +88,15 @@ class DevoteeSerializer(serializers.ModelSerializer):
 
         if input_normalized in synonym_map:
             return synonym_map[input_normalized]
+
+        # 🔹 Direct match from model choices
+        normalized_map = {
+            normalize_string(choice[0]): choice[0].upper()
+            for choice in Devotee.NAKSHATRA_CHOICES
+        }
+
+        if input_normalized in normalized_map:
+            return normalized_map[input_normalized]
 
         raise serializers.ValidationError("Invalid Nakshatra selected.")
 

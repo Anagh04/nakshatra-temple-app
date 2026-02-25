@@ -107,7 +107,13 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
+  /* ============================
+     DOWNLOAD PDF WITH CONFIRM
+  ============================ */
+
   const downloadPDF = () => {
+    if (!window.confirm("Are you sure you want to download this PDF?")) return;
+
     const doc = new jsPDF();
 
     const rows = filteredData.map((item, i) => [
@@ -123,11 +129,30 @@ function NakshatraTable({ type = "devotees" }) {
       body: rows,
     });
 
-    doc.save("data.pdf");
-    toast.success("PDF downloaded");
+    const today = new Date().toISOString().split("T")[0];
+
+    let fileName = "";
+
+    if (isDuplicatePage) {
+      fileName = `ALL_DUPLICATES_${today}.pdf`;
+    } else if (isInvalidPage) {
+      fileName = `ALL_INVALIDS_${today}.pdf`;
+    } else {
+      const activeNakshatra = selectedNakshatra || nakshatraName || "ALL";
+      fileName = `${activeNakshatra}_${today}.pdf`;
+    }
+
+    doc.save(fileName);
+    toast.success(`PDF downloaded: ${fileName}`);
   };
 
+  /* ============================
+     DOWNLOAD CSV WITH CONFIRM
+  ============================ */
+
   const downloadCSV = () => {
+    if (!window.confirm("Are you sure you want to download this CSV?")) return;
+
     const worksheet = XLSX.utils.json_to_sheet(filteredData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
@@ -135,8 +160,21 @@ function NakshatraTable({ type = "devotees" }) {
     const csv = XLSX.write(workbook, { bookType: "csv", type: "array" });
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 
-    saveAs(blob, "data.csv");
-    toast.success("CSV downloaded");
+    const today = new Date().toISOString().split("T")[0];
+
+    let fileName = "";
+
+    if (isDuplicatePage) {
+      fileName = `ALL_DUPLICATES_${today}.csv`;
+    } else if (isInvalidPage) {
+      fileName = `ALL_INVALIDS_${today}.csv`;
+    } else {
+      const activeNakshatra = selectedNakshatra || nakshatraName || "ALL";
+      fileName = `${activeNakshatra}_${today}.csv`;
+    }
+
+    saveAs(blob, fileName);
+    toast.success(`CSV downloaded: ${fileName}`);
   };
 
   const startEdit = (item) => {
@@ -228,7 +266,6 @@ function NakshatraTable({ type = "devotees" }) {
 
   return (
     <div className="table-container">
-
       <h2>
         {isDuplicatePage
           ? "Duplicate Entries"
@@ -238,7 +275,6 @@ function NakshatraTable({ type = "devotees" }) {
       </h2>
 
       <div className="controls">
-
         <input
           type="text"
           placeholder="Search name or phone..."
@@ -294,112 +330,25 @@ function NakshatraTable({ type = "devotees" }) {
             {filteredData.map((item, index) => (
               <tr key={item.id}>
                 <td>{index + 1}</td>
-
-                <td>
-                  {editingId === item.id ? (
-                    <input
-                      value={editData.name}
-                      onChange={(e) =>
-                        setEditData({ ...editData, name: e.target.value })
-                      }
-                    />
-                  ) : item.name}
-                </td>
-
-                <td>
-                  {editingId === item.id ? (
-                    <input
-                      value={editData.country_code}
-                      onChange={(e) =>
-                        setEditData({ ...editData, country_code: e.target.value })
-                      }
-                    />
-                  ) : item.country_code}
-                </td>
-
-                <td>
-                  {editingId === item.id ? (
-                    <input
-                      value={editData.phone}
-                      onChange={(e) =>
-                        setEditData({ ...editData, phone: e.target.value })
-                      }
-                    />
-                  ) : item.phone}
-                </td>
-
+                <td>{item.name}</td>
+                <td>{item.country_code}</td>
+                <td>{item.phone}</td>
                 {isDevoteePage && (
                   <td>
                     {item.created_at
-                      ? new Date(item.created_at).toLocaleString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                      ? new Date(item.created_at).toLocaleString("en-IN")
                       : "-"}
                   </td>
                 )}
-
                 {(isDuplicatePage || isInvalidPage) && (
-                  <td>
-                    {editingId === item.id && isInvalidPage ? (
-                      <select
-                        value={editData.nakshatra || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, nakshatra: e.target.value })
-                        }
-                      >
-                        {editData.nakshatra &&
-                          !NAKSHATRA_OPTIONS.includes(editData.nakshatra.toUpperCase()) && (
-                            <option value={editData.nakshatra}>
-                              {editData.nakshatra} (Invalid)
-                            </option>
-                          )}
-
-                        {NAKSHATRA_OPTIONS.map((nak) => (
-                          <option key={nak} value={nak}>
-                            {nak}
-                          </option>
-                        ))}
-                      </select>
-                    ) : item.nakshatra}
-                  </td>
+                  <td>{item.nakshatra}</td>
                 )}
-
                 {isInvalidPage && <td>{item.reason}</td>}
-
                 <td>
-                  {editingId === item.id ? (
-                    <>
-                      {isInvalidPage ? (
-                        <button className="btn convert-btn" onClick={() => handleConvert(item.id)}>
-                          Convert
-                        </button>
-                      ) : (
-                        <button className="btn save-btn" onClick={() => handleUpdate(item.id)}>
-                          Save
-                        </button>
-                      )}
-                      <button className="btn cancel-btn" onClick={cancelEdit}>
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {!isDuplicatePage && (
-                        <button className="btn edit-btn" onClick={() => startEdit(item)}>
-                          Edit
-                        </button>
-                      )}
-                      <button className="btn delete-btn" onClick={() => handleDelete(item.id)}>
-                        Delete
-                      </button>
-                    </>
-                  )}
+                  <button className="btn delete-btn" onClick={() => handleDelete(item.id)}>
+                    Delete
+                  </button>
                 </td>
-
               </tr>
             ))}
           </tbody>

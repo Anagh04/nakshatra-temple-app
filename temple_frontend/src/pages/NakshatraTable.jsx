@@ -29,8 +29,6 @@ function NakshatraTable({ type = "devotees" }) {
   const [fetchLoading, setFetchLoading] = useState(false);
   const [sortField, setSortField] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
-
-  // 🔥 Download confirmation modal
   const [downloadType, setDownloadType] = useState(null);
 
   const isDuplicatePage = type === "duplicates";
@@ -63,7 +61,6 @@ function NakshatraTable({ type = "devotees" }) {
   /* ================= FILTER + SORT ================= */
 
   const filteredData = useMemo(() => {
-
     let filtered = data.filter((item) => {
       const matchSearch =
         item.name?.toUpperCase().includes(searchTerm.toUpperCase()) ||
@@ -76,7 +73,6 @@ function NakshatraTable({ type = "devotees" }) {
     });
 
     filtered.sort((a, b) => {
-
       if (sortField === "name") {
         return sortOrder === "asc"
           ? a.name.localeCompare(b.name)
@@ -90,17 +86,15 @@ function NakshatraTable({ type = "devotees" }) {
       }
 
       return 0;
-
     });
 
     return filtered;
 
   }, [data, searchTerm, selectedNakshatra, sortField, sortOrder]);
 
-  /* ================= DOWNLOAD PDF ================= */
+  /* ================= DOWNLOAD ================= */
 
   const downloadPDF = () => {
-
     const doc = new jsPDF();
 
     const rows = filteredData.map((item, i) => [
@@ -119,22 +113,15 @@ function NakshatraTable({ type = "devotees" }) {
     const today = new Date().toISOString().split("T")[0];
 
     let fileName = "";
-
     if (isDuplicatePage) fileName = `ALL_DUPLICATES_${today}.pdf`;
     else if (isInvalidPage) fileName = `ALL_INVALIDS_${today}.pdf`;
-    else {
-      const activeNakshatra = selectedNakshatra || nakshatraName || "ALL";
-      fileName = `${activeNakshatra}_${today}.pdf`;
-    }
+    else fileName = `${nakshatraName || "ALL"}_${today}.pdf`;
 
     doc.save(fileName);
     toast.success(`PDF downloaded: ${fileName}`);
   };
 
-  /* ================= DOWNLOAD CSV ================= */
-
   const downloadCSV = () => {
-
     const worksheet = XLSX.utils.json_to_sheet(filteredData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
@@ -145,19 +132,15 @@ function NakshatraTable({ type = "devotees" }) {
     const today = new Date().toISOString().split("T")[0];
 
     let fileName = "";
-
     if (isDuplicatePage) fileName = `ALL_DUPLICATES_${today}.csv`;
     else if (isInvalidPage) fileName = `ALL_INVALIDS_${today}.csv`;
-    else {
-      const activeNakshatra = selectedNakshatra || nakshatraName || "ALL";
-      fileName = `${activeNakshatra}_${today}.csv`;
-    }
+    else fileName = `${nakshatraName || "ALL"}_${today}.csv`;
 
     saveAs(blob, fileName);
     toast.success(`CSV downloaded: ${fileName}`);
   };
 
-  /* ================= DELETE ALL ================= */
+  /* ================= DELETE ================= */
 
   const handleDeleteAll = async () => {
     if (!window.confirm("Delete all records?")) return;
@@ -173,6 +156,23 @@ function NakshatraTable({ type = "devotees" }) {
       fetchData();
     } catch {
       toast.error("Delete all failed");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this entry?")) return;
+
+    try {
+      let endpoint = "";
+      if (isDuplicatePage) endpoint = `duplicates/${id}/`;
+      else if (isInvalidPage) endpoint = `invalids/${id}/`;
+      else endpoint = `devotees/${id}/`;
+
+      await API.delete(endpoint);
+      toast.success("Deleted successfully");
+      fetchData();
+    } catch {
+      toast.error("Delete failed");
     }
   };
 
@@ -202,8 +202,6 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
-  /* ================= CONVERT ================= */
-
   const handleConvert = async (id) => {
     try {
       await API.post("devotees/", {
@@ -217,28 +215,8 @@ function NakshatraTable({ type = "devotees" }) {
       toast.success("Converted to valid devotee");
       cancelEdit();
       fetchData();
-
     } catch {
       toast.error("Conversion failed");
-    }
-  };
-
-  /* ================= DELETE ================= */
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this entry?")) return;
-
-    try {
-      let endpoint = "";
-      if (isDuplicatePage) endpoint = `duplicates/${id}/`;
-      else if (isInvalidPage) endpoint = `invalids/${id}/`;
-      else endpoint = `devotees/${id}/`;
-
-      await API.delete(endpoint);
-      toast.success("Deleted successfully");
-      fetchData();
-    } catch {
-      toast.error("Delete failed");
     }
   };
 
@@ -256,25 +234,12 @@ function NakshatraTable({ type = "devotees" }) {
       </h2>
 
       <div className="controls">
-
         <input
           type="text"
           placeholder="Search name or phone..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-
-        {(isDuplicatePage || isInvalidPage) && (
-          <select
-            value={selectedNakshatra}
-            onChange={(e) => setSelectedNakshatra(e.target.value)}
-          >
-            <option value="">All Nakshatras</option>
-            {NAKSHATRA_OPTIONS.map((nak) => (
-              <option key={nak} value={nak}>{nak}</option>
-            ))}
-          </select>
-        )}
 
         <select value={sortField} onChange={(e) => setSortField(e.target.value)}>
           <option value="date">Sort by Date</option>
@@ -286,45 +251,24 @@ function NakshatraTable({ type = "devotees" }) {
           <option value="asc">Ascending</option>
         </select>
 
-        <button className="btn pdf-btn" onClick={() => setDownloadType("pdf")}>
-          PDF
-        </button>
-
-        <button className="btn csv-btn" onClick={() => setDownloadType("csv")}>
-          CSV
-        </button>
-
-        <button className="btn delete-btn" onClick={handleDeleteAll}>
-          Delete All
-        </button>
+        <button className="btn pdf-btn" onClick={() => setDownloadType("pdf")}>PDF</button>
+        <button className="btn csv-btn" onClick={() => setDownloadType("csv")}>CSV</button>
+        <button className="btn delete-btn" onClick={handleDeleteAll}>Delete All</button>
       </div>
 
-      {/* DOWNLOAD CONFIRMATION MODAL */}
+      {/* DOWNLOAD MODAL */}
       {downloadType && (
         <div className="custom-modal-overlay">
           <div className="custom-modal">
             <h3>Download Confirmation</h3>
-            <p>
-              Are you sure you want to download this{" "}
-              {downloadType.toUpperCase()} file?
-            </p>
+            <p>Download {downloadType.toUpperCase()} file?</p>
             <div className="modal-actions">
-              <button
-                className="btn save-btn"
-                onClick={() => {
-                  if (downloadType === "pdf") downloadPDF();
-                  if (downloadType === "csv") downloadCSV();
-                  setDownloadType(null);
-                }}
-              >
-                Confirm
-              </button>
-              <button
-                className="btn cancel-btn"
-                onClick={() => setDownloadType(null)}
-              >
-                Cancel
-              </button>
+              <button className="btn save-btn" onClick={() => {
+                if (downloadType === "pdf") downloadPDF();
+                if (downloadType === "csv") downloadCSV();
+                setDownloadType(null);
+              }}>Confirm</button>
+              <button className="btn cancel-btn" onClick={() => setDownloadType(null)}>Cancel</button>
             </div>
           </div>
         </div>
@@ -351,9 +295,39 @@ function NakshatraTable({ type = "devotees" }) {
             {filteredData.map((item, index) => (
               <tr key={item.id}>
                 <td>{index + 1}</td>
-                <td>{item.name}</td>
-                <td>{item.country_code}</td>
-                <td>{item.phone}</td>
+
+                <td>
+                  {editingId === item.id ? (
+                    <input
+                      value={editData.name}
+                      onChange={(e) =>
+                        setEditData({ ...editData, name: e.target.value })
+                      }
+                    />
+                  ) : item.name}
+                </td>
+
+                <td>
+                  {editingId === item.id ? (
+                    <input
+                      value={editData.country_code}
+                      onChange={(e) =>
+                        setEditData({ ...editData, country_code: e.target.value })
+                      }
+                    />
+                  ) : item.country_code}
+                </td>
+
+                <td>
+                  {editingId === item.id ? (
+                    <input
+                      value={editData.phone}
+                      onChange={(e) =>
+                        setEditData({ ...editData, phone: e.target.value })
+                      }
+                    />
+                  ) : item.phone}
+                </td>
 
                 {isDevoteePage && (
                   <td>
@@ -364,19 +338,54 @@ function NakshatraTable({ type = "devotees" }) {
                 )}
 
                 {(isDuplicatePage || isInvalidPage) && (
-                  <td>{item.nakshatra}</td>
+                  <td>
+                    {editingId === item.id && isInvalidPage ? (
+                      <select
+                        value={editData.nakshatra || ""}
+                        onChange={(e) =>
+                          setEditData({ ...editData, nakshatra: e.target.value })
+                        }
+                      >
+                        {NAKSHATRA_OPTIONS.map((nak) => (
+                          <option key={nak} value={nak}>{nak}</option>
+                        ))}
+                      </select>
+                    ) : item.nakshatra}
+                  </td>
                 )}
 
                 {isInvalidPage && <td>{item.reason}</td>}
 
                 <td>
-                  <button
-                    className="btn delete-btn"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    Delete
-                  </button>
+                  {editingId === item.id ? (
+                    <>
+                      {isInvalidPage ? (
+                        <button className="btn convert-btn" onClick={() => handleConvert(item.id)}>
+                          Convert
+                        </button>
+                      ) : (
+                        <button className="btn save-btn" onClick={() => handleUpdate(item.id)}>
+                          Save
+                        </button>
+                      )}
+                      <button className="btn cancel-btn" onClick={cancelEdit}>
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {!isDuplicatePage && (
+                        <button className="btn edit-btn" onClick={() => startEdit(item)}>
+                          Edit
+                        </button>
+                      )}
+                      <button className="btn delete-btn" onClick={() => handleDelete(item.id)}>
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </td>
+
               </tr>
             ))}
           </tbody>

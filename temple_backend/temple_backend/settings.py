@@ -17,7 +17,6 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret")
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-# Only backend domains here
 ALLOWED_HOSTS = [
     "nakshatra-temple-app.onrender.com",
     "localhost",
@@ -78,7 +77,7 @@ SIMPLE_JWT = {
 }
 
 # ==================================================
-# CORS CONFIG
+# CORS CONFIG  (FIXED)
 # ==================================================
 
 CORS_ALLOWED_ORIGINS = [
@@ -89,19 +88,10 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_HEADERS = [
-    "authorization",
-    "content-type",
-]
-
-CORS_ALLOW_METHODS = [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "OPTIONS",
-]
+# 🔥 IMPORTANT:
+# Removed CORS_ALLOW_HEADERS
+# Removed CORS_ALLOW_METHODS
+# Let django-cors-headers use safe defaults
 
 # ==================================================
 # DATABASE CONFIGURATION
@@ -110,7 +100,6 @@ CORS_ALLOW_METHODS = [
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
-    # Production (Render PostgreSQL)
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
@@ -119,7 +108,6 @@ if DATABASE_URL:
         )
     }
 else:
-    # Local Development (MySQL - XAMPP)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
@@ -175,10 +163,13 @@ TIME_ZONE = "Asia/Kolkata"
 USE_TZ = True
 
 # ==================================================
-# PRODUCTION SECURITY
+# PRODUCTION SECURITY (FIXED FOR RENDER)
 # ==================================================
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
+
+    # 🔥 REQUIRED for Render HTTPS proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

@@ -341,80 +341,169 @@ function NakshatraTable({ type = "devotees" }) {
                 onClick={() => {
                   setDeleteTarget(null);
                   setDeleteAllMode(false);
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                          }}
+                          >
+                          Cancel
+                          </button>
+                        </div>
+                        </div>
+                      </div>
+                      )}
 
-      {fetchLoading ? (
-        <p style={{ textAlign: "center" }}>Loading...</p>
-      ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Name</th>
-              <th>Country Code</th>
-              <th>Phone</th>
-              {isDevoteePage && <th>Date & Time</th>}
-              {(isDuplicatePage || isInvalidPage) && <th>Nakshatra</th>}
-              {isInvalidPage && <th>Reason</th>}
-              <th>Actions</th>
-            </tr>
-          </thead>
+                      {fetchLoading ? (
+                      <p style={{ textAlign: "center" }}>Loading...</p>
+                      ) : (
+                      <table className="data-table">
+                        <thead>
+                        <tr>
+                          <th>No</th>
+                          <th>Name</th>
+                          <th>Country Code</th>
+                          <th>Phone</th>
+                          {isDevoteePage && <th>Date & Time</th>}
+                          {(isDuplicatePage || isInvalidPage) && <th>Nakshatra</th>}
+                          {isInvalidPage && <th>Reason</th>}
+                          <th>Actions</th>
+                        </tr>
+                        </thead>
 
-          <tbody>
-            {filteredData.map((item, index) => (
-              <tr key={item.id}>
-                <td>{index + 1}</td>
+                        <tbody>
+                        {filteredData.map((item, index) => (
+                          <tr key={item.id}>
+                          <td>{index + 1}</td>
 
-                <td>
-                  {editingId === item.id ? (
-                    <input
-                      value={editData.name}
-                      onChange={(e) =>
-                        setEditData({ ...editData, name: e.target.value })
-                      }
-                    />
-                  ) : item.name}
-                </td>
+                          <td>
+                            {editingId === item.id ? (
+                            <input
+                              value={editData.name}
+                              onChange={(e) =>
+                              setEditData({ ...editData, name: e.target.value })
+                              }
+                            />
+                            ) : (
+                            item.name
+                            )}
+                          </td>
 
-                <td>
-                  {editingId === item.id ? (
-                    <input
-                      value={editData.country_code}
-                      onChange={(e) =>
-                        setEditData({ ...editData, country_code: e.target.value })
-                      }
-                    />
-                  ) : item.country_code}
-                </td>
+                          <td>
+                            {editingId === item.id ? (
+                            <input
+                              value={editData.country_code}
+                              onChange={(e) =>
+                              setEditData({ ...editData, country_code: e.target.value })
+                              }
+                            />
+                            ) : (
+                            item.country_code
+                            )}
+                          </td>
 
-                <td>
-                  {editingId === item.id ? (
-                    <input
-                      value={editData.phone}
-                      onChange={(e) =>
-                        setEditData({ ...editData, phone: e.target.value })
-                      }
-                    />
-                  ) : item.phone}
-                </td>
+                          <td>
+                            {editingId === item.id ? (
+                            <input
+                              value={editData.phone}
+                              onChange={(e) =>
+                              setEditData({ ...editData, phone: e.target.value })
+                              }
+                            />
+                            ) : (
+                            item.phone
+                            )}
+                          </td>
 
-                {(isDuplicatePage || isInvalidPage) && (
-                  <td>
-                    {editingId === item.id ? (
-                      <select
-                        value={editData.nakshatra || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, nakshatra: e.target.value })
-                        }
-                      >
-                        {/* 🔥 Invalid First */}
+                          {isDevoteePage && (
+                            <td>
+                            {item.created_at
+                              ? new Date(item.created_at).toLocaleString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                              : "-"}
+                            </td>
+                          )}
+
+                          {(isDuplicatePage || isInvalidPage) && (
+                            <td>
+                            {editingId === item.id ? (
+                              <select
+                              value={editData.nakshatra || ""}
+                              onChange={(e) =>
+                                setEditData({ ...editData, nakshatra: e.target.value })
+                              }
+                              >
+                              {editData.nakshatra &&
+                                !NAKSHATRA_OPTIONS.includes(editData.nakshatra.toUpperCase()) && (
+                                <option value={editData.nakshatra}>
+                                  {editData.nakshatra} (Invalid)
+                                </option>
+                                )}
+
+                              {NAKSHATRA_OPTIONS.map((nak) => (
+                                <option key={nak} value={nak}>{nak}</option>
+                              ))}
+                              </select>
+                            ) : (
+                              item.nakshatra
+                            )}
+                            </td>
+                          )}
+
+                          {isInvalidPage && <td>{item.reason}</td>}
+
+                          <td>
+                            {editingId === item.id ? (
+                            <>
+                              {isInvalidPage ? (
+                              <button
+                                className="btn convert-btn"
+                                onClick={() => handleConvert(item.id)}
+                              >
+                                Convert
+                              </button>
+                              ) : (
+                              <button
+                                className="btn save-btn"
+                                onClick={() => handleUpdate(item.id)}
+                              >
+                                Save
+                              </button>
+                              )}
+                              <button className="btn cancel-btn" onClick={cancelEdit}>
+                              Cancel
+                              </button>
+                            </>
+                            ) : (
+                            <>
+                              {!isDuplicatePage && (
+                              <button
+                                className="btn edit-btn"
+                                onClick={() => startEdit(item)}
+                              >
+                                Edit
+                              </button>
+                              )}
+                              <button
+                              className="btn delete-btn"
+                              onClick={() => setDeleteTarget(item.id)}
+                              >
+                              Delete
+                              </button>
+                            </>
+                            )}
+                          </td>
+                          </tr>
+                        ))}
+                        </tbody>
+                      </table>
+                      )}
+                    </div>
+                    );
+                  }
+
+                  export default NakshatraTable;}
                         {editData.nakshatra &&
                           !NAKSHATRA_OPTIONS.includes(editData.nakshatra.toUpperCase()) && (
                             <option value={editData.nakshatra}>

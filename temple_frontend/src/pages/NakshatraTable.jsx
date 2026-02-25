@@ -29,13 +29,17 @@ function NakshatraTable({ type = "devotees" }) {
   const [fetchLoading, setFetchLoading] = useState(false);
   const [sortField, setSortField] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
+
+  // 🔥 Custom modals
   const [downloadType, setDownloadType] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteAllMode, setDeleteAllMode] = useState(false);
 
   const isDuplicatePage = type === "duplicates";
   const isInvalidPage = type === "invalids";
   const isDevoteePage = !isDuplicatePage && !isInvalidPage;
 
-  /* ================= FETCH DATA ================= */
+  /* ================= FETCH ================= */
 
   const fetchData = async () => {
     setFetchLoading(true);
@@ -61,6 +65,7 @@ function NakshatraTable({ type = "devotees" }) {
   /* ================= FILTER + SORT ================= */
 
   const filteredData = useMemo(() => {
+
     let filtered = data.filter((item) => {
       const matchSearch =
         item.name?.toUpperCase().includes(searchTerm.toUpperCase()) ||
@@ -94,6 +99,16 @@ function NakshatraTable({ type = "devotees" }) {
 
   /* ================= DOWNLOAD ================= */
 
+  const generateFileName = (ext) => {
+    const today = new Date().toISOString().split("T")[0];
+
+    if (isDuplicatePage) return `ALL_DUPLICATES_${today}.${ext}`;
+    if (isInvalidPage) return `ALL_INVALIDS_${today}.${ext}`;
+
+    const activeNakshatra = selectedNakshatra || nakshatraName || "ALL";
+    return `${activeNakshatra}_${today}.${ext}`;
+  };
+
   const downloadPDF = () => {
     const doc = new jsPDF();
 
@@ -110,13 +125,7 @@ function NakshatraTable({ type = "devotees" }) {
       body: rows,
     });
 
-    const today = new Date().toISOString().split("T")[0];
-
-    let fileName = "";
-    if (isDuplicatePage) fileName = `ALL_DUPLICATES_${today}.pdf`;
-    else if (isInvalidPage) fileName = `ALL_INVALIDS_${today}.pdf`;
-    else fileName = `${nakshatraName || "ALL"}_${today}.pdf`;
-
+    const fileName = generateFileName("pdf");
     doc.save(fileName);
     toast.success(`PDF downloaded: ${fileName}`);
   };
@@ -129,50 +138,39 @@ function NakshatraTable({ type = "devotees" }) {
     const csv = XLSX.write(workbook, { bookType: "csv", type: "array" });
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 
-    const today = new Date().toISOString().split("T")[0];
-
-    let fileName = "";
-    if (isDuplicatePage) fileName = `ALL_DUPLICATES_${today}.csv`;
-    else if (isInvalidPage) fileName = `ALL_INVALIDS_${today}.csv`;
-    else fileName = `${nakshatraName || "ALL"}_${today}.csv`;
-
+    const fileName = generateFileName("csv");
     saveAs(blob, fileName);
     toast.success(`CSV downloaded: ${fileName}`);
   };
 
   /* ================= DELETE ================= */
 
-  const handleDeleteAll = async () => {
-    if (!window.confirm("Delete all records?")) return;
-
+  const confirmDelete = async () => {
     try {
-      let endpoint = "";
-      if (isDuplicatePage) endpoint = "delete-all-duplicates/";
-      else if (isInvalidPage) endpoint = "delete-all-invalids/";
-      else endpoint = `delete-nakshatra/${nakshatraName}/`;
+      if (deleteAllMode) {
+        let endpoint = "";
+        if (isDuplicatePage) endpoint = "delete-all-duplicates/";
+        else if (isInvalidPage) endpoint = "delete-all-invalids/";
+        else endpoint = `delete-nakshatra/${nakshatraName}/`;
 
-      await API.delete(endpoint);
-      toast.success("All records deleted successfully");
-      fetchData();
-    } catch {
-      toast.error("Delete all failed");
-    }
-  };
+        await API.delete(endpoint);
+        toast.success("All records deleted successfully");
+      } else if (deleteTarget) {
+        let endpoint = "";
+        if (isDuplicatePage) endpoint = `duplicates/${deleteTarget}/`;
+        else if (isInvalidPage) endpoint = `invalids/${deleteTarget}/`;
+        else endpoint = `devotees/${deleteTarget}/`;
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this entry?")) return;
+        await API.delete(endpoint);
+        toast.success("Deleted successfully");
+      }
 
-    try {
-      let endpoint = "";
-      if (isDuplicatePage) endpoint = `duplicates/${id}/`;
-      else if (isInvalidPage) endpoint = `invalids/${id}/`;
-      else endpoint = `devotees/${id}/`;
-
-      await API.delete(endpoint);
-      toast.success("Deleted successfully");
       fetchData();
     } catch {
       toast.error("Delete failed");
+    } finally {
+      setDeleteTarget(null);
+      setDeleteAllMode(false);
     }
   };
 
@@ -202,6 +200,8 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
+  /* ================= CONVERT ================= */
+
   const handleConvert = async (id) => {
     try {
       await API.post("devotees/", {
@@ -215,8 +215,35 @@ function NakshatraTable({ type = "devotees" }) {
       toast.success("Converted to valid devotee");
       cancelEdit();
       fetchData();
-    } catch {
-      toast.error("Conversion failed");
+
+    } catch (error) {
+
+      const errorData = error.response?.data;
+      const isDuplicate =
+        errorData?.duplicate ||
+        errorData?.non_field_errors ||
+        errorData?.detail;
+
+      if (isDuplicate) {
+        try {
+          await API.post("duplicates/", {
+            name: editData.name.toUpperCase(),
+            country_code: editData.country_code,
+            phone: editData.phone,
+            nakshatra: editData.nakshatra.toUpperCase(),
+          });
+
+          await API.delete(`invalids/${id}/`);
+          toast.warning("Already exists. Moved to duplicate list.");
+          cancelEdit();
+          fetchData();
+
+        } catch {
+          toast.error("Failed to move to duplicate list");
+        }
+      } else {
+        toast.error("Conversion failed");
+      }
     }
   };
 
@@ -241,6 +268,18 @@ function NakshatraTable({ type = "devotees" }) {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
 
+        {(isDuplicatePage || isInvalidPage) && (
+          <select
+            value={selectedNakshatra}
+            onChange={(e) => setSelectedNakshatra(e.target.value)}
+          >
+            <option value="">All Nakshatras</option>
+            {NAKSHATRA_OPTIONS.map((nak) => (
+              <option key={nak} value={nak}>{nak}</option>
+            ))}
+          </select>
+        )}
+
         <select value={sortField} onChange={(e) => setSortField(e.target.value)}>
           <option value="date">Sort by Date</option>
           <option value="name">Sort by Name</option>
@@ -253,7 +292,7 @@ function NakshatraTable({ type = "devotees" }) {
 
         <button className="btn pdf-btn" onClick={() => setDownloadType("pdf")}>PDF</button>
         <button className="btn csv-btn" onClick={() => setDownloadType("csv")}>CSV</button>
-        <button className="btn delete-btn" onClick={handleDeleteAll}>Delete All</button>
+        <button className="btn delete-btn" onClick={() => setDeleteAllMode(true)}>Delete All</button>
       </div>
 
       {/* DOWNLOAD MODAL */}
@@ -263,12 +302,49 @@ function NakshatraTable({ type = "devotees" }) {
             <h3>Download Confirmation</h3>
             <p>Download {downloadType.toUpperCase()} file?</p>
             <div className="modal-actions">
-              <button className="btn save-btn" onClick={() => {
-                if (downloadType === "pdf") downloadPDF();
-                if (downloadType === "csv") downloadCSV();
-                setDownloadType(null);
-              }}>Confirm</button>
-              <button className="btn cancel-btn" onClick={() => setDownloadType(null)}>Cancel</button>
+              <button
+                className="btn save-btn"
+                onClick={() => {
+                  downloadType === "pdf" ? downloadPDF() : downloadCSV();
+                  setDownloadType(null);
+                }}
+              >
+                Confirm
+              </button>
+              <button
+                className="btn cancel-btn"
+                onClick={() => setDownloadType(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE MODAL */}
+      {(deleteTarget || deleteAllMode) && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal">
+            <h3>Delete Confirmation</h3>
+            <p>
+              {deleteAllMode
+                ? "Are you sure you want to delete ALL records?"
+                : "Are you sure you want to delete this record?"}
+            </p>
+            <div className="modal-actions">
+              <button className="btn delete-btn" onClick={confirmDelete}>
+                Confirm
+              </button>
+              <button
+                className="btn cancel-btn"
+                onClick={() => {
+                  setDeleteTarget(null);
+                  setDeleteAllMode(false);
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -329,23 +405,23 @@ function NakshatraTable({ type = "devotees" }) {
                   ) : item.phone}
                 </td>
 
-                {isDevoteePage && (
-                  <td>
-                    {item.created_at
-                      ? new Date(item.created_at).toLocaleString("en-IN")
-                      : "-"}
-                  </td>
-                )}
-
                 {(isDuplicatePage || isInvalidPage) && (
                   <td>
-                    {editingId === item.id && isInvalidPage ? (
+                    {editingId === item.id ? (
                       <select
                         value={editData.nakshatra || ""}
                         onChange={(e) =>
                           setEditData({ ...editData, nakshatra: e.target.value })
                         }
                       >
+                        {/* 🔥 Invalid First */}
+                        {editData.nakshatra &&
+                          !NAKSHATRA_OPTIONS.includes(editData.nakshatra.toUpperCase()) && (
+                            <option value={editData.nakshatra}>
+                              {editData.nakshatra} (Invalid)
+                            </option>
+                          )}
+
                         {NAKSHATRA_OPTIONS.map((nak) => (
                           <option key={nak} value={nak}>{nak}</option>
                         ))}
@@ -360,11 +436,17 @@ function NakshatraTable({ type = "devotees" }) {
                   {editingId === item.id ? (
                     <>
                       {isInvalidPage ? (
-                        <button className="btn convert-btn" onClick={() => handleConvert(item.id)}>
+                        <button
+                          className="btn convert-btn"
+                          onClick={() => handleConvert(item.id)}
+                        >
                           Convert
                         </button>
                       ) : (
-                        <button className="btn save-btn" onClick={() => handleUpdate(item.id)}>
+                        <button
+                          className="btn save-btn"
+                          onClick={() => handleUpdate(item.id)}
+                        >
                           Save
                         </button>
                       )}
@@ -375,17 +457,22 @@ function NakshatraTable({ type = "devotees" }) {
                   ) : (
                     <>
                       {!isDuplicatePage && (
-                        <button className="btn edit-btn" onClick={() => startEdit(item)}>
+                        <button
+                          className="btn edit-btn"
+                          onClick={() => startEdit(item)}
+                        >
                           Edit
                         </button>
                       )}
-                      <button className="btn delete-btn" onClick={() => handleDelete(item.id)}>
+                      <button
+                        className="btn delete-btn"
+                        onClick={() => setDeleteTarget(item.id)}
+                      >
                         Delete
                       </button>
                     </>
                   )}
                 </td>
-
               </tr>
             ))}
           </tbody>

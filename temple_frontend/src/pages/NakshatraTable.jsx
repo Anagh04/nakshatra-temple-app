@@ -30,6 +30,9 @@ function NakshatraTable({ type = "devotees" }) {
   const [sortField, setSortField] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
 
+  // 🔥 NEW STATE FOR DOWNLOAD POPUP
+  const [downloadType, setDownloadType] = useState(null);
+
   const isDuplicatePage = type === "duplicates";
   const isInvalidPage = type === "invalids";
   const isDevoteePage = !isDuplicatePage && !isInvalidPage;
@@ -90,29 +93,11 @@ function NakshatraTable({ type = "devotees" }) {
 
   }, [data, searchTerm, selectedNakshatra, sortField, sortOrder]);
 
-  const handleDeleteAll = async () => {
-    if (!window.confirm("Delete all records?")) return;
-
-    try {
-      let endpoint = "";
-      if (isDuplicatePage) endpoint = "delete-all-duplicates/";
-      else if (isInvalidPage) endpoint = "delete-all-invalids/";
-      else endpoint = `delete-nakshatra/${nakshatraName}/`;
-
-      await API.delete(endpoint);
-      toast.success("All records deleted successfully");
-      fetchData();
-    } catch {
-      toast.error("Delete all failed");
-    }
-  };
-
   /* ============================
-     DOWNLOAD PDF WITH CONFIRM
+     DOWNLOAD PDF
   ============================ */
 
   const downloadPDF = () => {
-    if (!window.confirm("Are you sure you want to download this PDF?")) return;
 
     const doc = new jsPDF();
 
@@ -147,11 +132,10 @@ function NakshatraTable({ type = "devotees" }) {
   };
 
   /* ============================
-     DOWNLOAD CSV WITH CONFIRM
+     DOWNLOAD CSV
   ============================ */
 
   const downloadCSV = () => {
-    if (!window.confirm("Are you sure you want to download this CSV?")) return;
 
     const worksheet = XLSX.utils.json_to_sheet(filteredData);
     const workbook = XLSX.utils.book_new();
@@ -175,6 +159,23 @@ function NakshatraTable({ type = "devotees" }) {
 
     saveAs(blob, fileName);
     toast.success(`CSV downloaded: ${fileName}`);
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm("Delete all records?")) return;
+
+    try {
+      let endpoint = "";
+      if (isDuplicatePage) endpoint = "delete-all-duplicates/";
+      else if (isInvalidPage) endpoint = "delete-all-invalids/";
+      else endpoint = `delete-nakshatra/${nakshatraName}/`;
+
+      await API.delete(endpoint);
+      toast.success("All records deleted successfully");
+      fetchData();
+    } catch {
+      toast.error("Delete all failed");
+    }
   };
 
   const startEdit = (item) => {
@@ -266,6 +267,7 @@ function NakshatraTable({ type = "devotees" }) {
 
   return (
     <div className="table-container">
+
       <h2>
         {isDuplicatePage
           ? "Duplicate Entries"
@@ -275,6 +277,7 @@ function NakshatraTable({ type = "devotees" }) {
       </h2>
 
       <div className="controls">
+
         <input
           type="text"
           placeholder="Search name or phone..."
@@ -304,56 +307,52 @@ function NakshatraTable({ type = "devotees" }) {
           <option value="asc">Ascending</option>
         </select>
 
-        <button className="btn pdf-btn" onClick={downloadPDF}>PDF</button>
-        <button className="btn csv-btn" onClick={downloadCSV}>CSV</button>
-        <button className="btn delete-btn" onClick={handleDeleteAll}>Delete All</button>
+        <button className="btn pdf-btn" onClick={() => setDownloadType("pdf")}>
+          PDF
+        </button>
+
+        <button className="btn csv-btn" onClick={() => setDownloadType("csv")}>
+          CSV
+        </button>
+
+        <button className="btn delete-btn" onClick={handleDeleteAll}>
+          Delete All
+        </button>
       </div>
 
-      {fetchLoading ? (
-        <p>Loading...</p>
-      ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Name</th>
-              <th>Country Code</th>
-              <th>Phone</th>
-              {isDevoteePage && <th>Date & Time</th>}
-              {(isDuplicatePage || isInvalidPage) && <th>Nakshatra</th>}
-              {isInvalidPage && <th>Reason</th>}
-              <th>Actions</th>
-            </tr>
-          </thead>
+      {/* DOWNLOAD POPUP */}
+      {downloadType && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal">
+            <h3>Download Confirmation</h3>
+            <p>
+              Are you sure you want to download this{" "}
+              {downloadType.toUpperCase()} file?
+            </p>
 
-          <tbody>
-            {filteredData.map((item, index) => (
-              <tr key={item.id}>
-                <td>{index + 1}</td>
-                <td>{item.name}</td>
-                <td>{item.country_code}</td>
-                <td>{item.phone}</td>
-                {isDevoteePage && (
-                  <td>
-                    {item.created_at
-                      ? new Date(item.created_at).toLocaleString("en-IN")
-                      : "-"}
-                  </td>
-                )}
-                {(isDuplicatePage || isInvalidPage) && (
-                  <td>{item.nakshatra}</td>
-                )}
-                {isInvalidPage && <td>{item.reason}</td>}
-                <td>
-                  <button className="btn delete-btn" onClick={() => handleDelete(item.id)}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            <div className="modal-actions">
+              <button
+                className="btn save-btn"
+                onClick={() => {
+                  if (downloadType === "pdf") downloadPDF();
+                  if (downloadType === "csv") downloadCSV();
+                  setDownloadType(null);
+                }}
+              >
+                Confirm
+              </button>
+
+              <button
+                className="btn cancel-btn"
+                onClick={() => setDownloadType(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
+
     </div>
   );
 }

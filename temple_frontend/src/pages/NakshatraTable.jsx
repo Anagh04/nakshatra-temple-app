@@ -30,12 +30,14 @@ function NakshatraTable({ type = "devotees" }) {
   const [sortField, setSortField] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
 
-  // 🔥 NEW STATE FOR DOWNLOAD POPUP
+  // 🔥 Download confirmation modal
   const [downloadType, setDownloadType] = useState(null);
 
   const isDuplicatePage = type === "duplicates";
   const isInvalidPage = type === "invalids";
   const isDevoteePage = !isDuplicatePage && !isInvalidPage;
+
+  /* ================= FETCH DATA ================= */
 
   const fetchData = async () => {
     setFetchLoading(true);
@@ -57,6 +59,8 @@ function NakshatraTable({ type = "devotees" }) {
   useEffect(() => {
     fetchData();
   }, [nakshatraName, type]);
+
+  /* ================= FILTER + SORT ================= */
 
   const filteredData = useMemo(() => {
 
@@ -93,9 +97,7 @@ function NakshatraTable({ type = "devotees" }) {
 
   }, [data, searchTerm, selectedNakshatra, sortField, sortOrder]);
 
-  /* ============================
-     DOWNLOAD PDF
-  ============================ */
+  /* ================= DOWNLOAD PDF ================= */
 
   const downloadPDF = () => {
 
@@ -118,11 +120,9 @@ function NakshatraTable({ type = "devotees" }) {
 
     let fileName = "";
 
-    if (isDuplicatePage) {
-      fileName = `ALL_DUPLICATES_${today}.pdf`;
-    } else if (isInvalidPage) {
-      fileName = `ALL_INVALIDS_${today}.pdf`;
-    } else {
+    if (isDuplicatePage) fileName = `ALL_DUPLICATES_${today}.pdf`;
+    else if (isInvalidPage) fileName = `ALL_INVALIDS_${today}.pdf`;
+    else {
       const activeNakshatra = selectedNakshatra || nakshatraName || "ALL";
       fileName = `${activeNakshatra}_${today}.pdf`;
     }
@@ -131,9 +131,7 @@ function NakshatraTable({ type = "devotees" }) {
     toast.success(`PDF downloaded: ${fileName}`);
   };
 
-  /* ============================
-     DOWNLOAD CSV
-  ============================ */
+  /* ================= DOWNLOAD CSV ================= */
 
   const downloadCSV = () => {
 
@@ -148,11 +146,9 @@ function NakshatraTable({ type = "devotees" }) {
 
     let fileName = "";
 
-    if (isDuplicatePage) {
-      fileName = `ALL_DUPLICATES_${today}.csv`;
-    } else if (isInvalidPage) {
-      fileName = `ALL_INVALIDS_${today}.csv`;
-    } else {
+    if (isDuplicatePage) fileName = `ALL_DUPLICATES_${today}.csv`;
+    else if (isInvalidPage) fileName = `ALL_INVALIDS_${today}.csv`;
+    else {
       const activeNakshatra = selectedNakshatra || nakshatraName || "ALL";
       fileName = `${activeNakshatra}_${today}.csv`;
     }
@@ -160,6 +156,8 @@ function NakshatraTable({ type = "devotees" }) {
     saveAs(blob, fileName);
     toast.success(`CSV downloaded: ${fileName}`);
   };
+
+  /* ================= DELETE ALL ================= */
 
   const handleDeleteAll = async () => {
     if (!window.confirm("Delete all records?")) return;
@@ -177,6 +175,8 @@ function NakshatraTable({ type = "devotees" }) {
       toast.error("Delete all failed");
     }
   };
+
+  /* ================= EDIT ================= */
 
   const startEdit = (item) => {
     setEditingId(item.id);
@@ -202,6 +202,8 @@ function NakshatraTable({ type = "devotees" }) {
     }
   };
 
+  /* ================= CONVERT ================= */
+
   const handleConvert = async (id) => {
     try {
       await API.post("devotees/", {
@@ -216,37 +218,12 @@ function NakshatraTable({ type = "devotees" }) {
       cancelEdit();
       fetchData();
 
-    } catch (error) {
-
-      const errorData = error.response?.data;
-      const isDuplicate =
-        errorData?.duplicate ||
-        errorData?.non_field_errors ||
-        errorData?.detail;
-
-      if (isDuplicate) {
-        try {
-          await API.post("duplicates/", {
-            name: editData.name.toUpperCase(),
-            country_code: editData.country_code,
-            phone: editData.phone,
-            nakshatra: editData.nakshatra.toUpperCase(),
-          });
-
-          await API.delete(`invalids/${id}/`);
-          toast.warning("Already exists. Moved to duplicate list.");
-          cancelEdit();
-          fetchData();
-
-        } catch {
-          toast.error("Failed to move to duplicate list");
-        }
-
-      } else {
-        toast.error("Conversion failed");
-      }
+    } catch {
+      toast.error("Conversion failed");
     }
   };
+
+  /* ================= DELETE ================= */
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this entry?")) return;
@@ -264,6 +241,8 @@ function NakshatraTable({ type = "devotees" }) {
       toast.error("Delete failed");
     }
   };
+
+  /* ================= UI ================= */
 
   return (
     <div className="table-container">
@@ -320,7 +299,7 @@ function NakshatraTable({ type = "devotees" }) {
         </button>
       </div>
 
-      {/* DOWNLOAD POPUP */}
+      {/* DOWNLOAD CONFIRMATION MODAL */}
       {downloadType && (
         <div className="custom-modal-overlay">
           <div className="custom-modal">
@@ -329,7 +308,6 @@ function NakshatraTable({ type = "devotees" }) {
               Are you sure you want to download this{" "}
               {downloadType.toUpperCase()} file?
             </p>
-
             <div className="modal-actions">
               <button
                 className="btn save-btn"
@@ -341,7 +319,6 @@ function NakshatraTable({ type = "devotees" }) {
               >
                 Confirm
               </button>
-
               <button
                 className="btn cancel-btn"
                 onClick={() => setDownloadType(null)}
@@ -351,6 +328,59 @@ function NakshatraTable({ type = "devotees" }) {
             </div>
           </div>
         </div>
+      )}
+
+      {fetchLoading ? (
+        <p style={{ textAlign: "center" }}>Loading...</p>
+      ) : (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Name</th>
+              <th>Country Code</th>
+              <th>Phone</th>
+              {isDevoteePage && <th>Date & Time</th>}
+              {(isDuplicatePage || isInvalidPage) && <th>Nakshatra</th>}
+              {isInvalidPage && <th>Reason</th>}
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredData.map((item, index) => (
+              <tr key={item.id}>
+                <td>{index + 1}</td>
+                <td>{item.name}</td>
+                <td>{item.country_code}</td>
+                <td>{item.phone}</td>
+
+                {isDevoteePage && (
+                  <td>
+                    {item.created_at
+                      ? new Date(item.created_at).toLocaleString("en-IN")
+                      : "-"}
+                  </td>
+                )}
+
+                {(isDuplicatePage || isInvalidPage) && (
+                  <td>{item.nakshatra}</td>
+                )}
+
+                {isInvalidPage && <td>{item.reason}</td>}
+
+                <td>
+                  <button
+                    className="btn delete-btn"
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
 
     </div>

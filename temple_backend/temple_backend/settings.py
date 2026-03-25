@@ -86,6 +86,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
 
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"https://.*\.vercel\.app",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 # 🔥 IMPORTANT:

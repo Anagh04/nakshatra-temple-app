@@ -8,7 +8,7 @@
   min-height: 100vh;
   font-family: 'Poppins', sans-serif;
   padding: 40px 20px;
-  background: url("../assets/zodiac-bg.jpeg") center/cover no-repeat;
+  background: url("/zodiac-bg.jpeg") center/cover no-repeat;
   position: relative;
   overflow-x: hidden;
 }

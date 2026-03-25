@@ -7,7 +7,7 @@
   padding: 60px 40px;
   background:
     linear-gradient(rgba(10, 5, 30, 0.85), rgba(10, 5, 30, 0.9)),
-    url("../assets/zodiac-bg.jpeg") center/cover no-repeat fixed;
+    url("/zodiac-bg.jpeg") center/cover no-repeat fixed;
   color: white;
   display: flex;
   flex-direction: column;

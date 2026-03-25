@@ -13,7 +13,7 @@
 
   background:
     linear-gradient(rgba(10, 5, 40, 0.9), rgba(5, 0, 30, 0.95)),
-    url("../assets/zodiac-bg.jpeg") no-repeat center/cover;
+    url("/zodiac-bg.jpeg") no-repeat center/cover;
 
   animation: fadeInPage 0.8s ease-in-out;
 }

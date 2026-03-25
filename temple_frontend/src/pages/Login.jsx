@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import API from "../services/api";   // ✅ Correct path
@@ -12,6 +13,13 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+  const token = localStorage.getItem("access");
+  if (token) {
+    navigate("/add-devotee");
+  }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();

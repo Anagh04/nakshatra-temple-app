@@ -13,7 +13,7 @@
 
 body {
   min-height: 100vh;
-  background: url("./assets/zodiac-bg.jpg") no-repeat center center fixed;
+  background: url("/zodiac-bg.jpg") no-repeat center center fixed;
   background-size: cover;
   position: relative;
   color: #fff;
